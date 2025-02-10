@@ -16,17 +16,23 @@ A Model Context Protocol (MCP) server for integrating ClickUp tasks with AI appl
   - Flexible identification using IDs or names
 
 - ✨ **Task Operations**
-  - Create and update tasks
+  - Create single or bulk tasks
   - Move tasks between lists
   - Duplicate tasks
   - Set priorities and due dates
   - Assign team members
 
 - 📊 **Information Retrieval**
-  - Get spaces and lists with their IDs
+  - Get complete hierarchy of spaces, folders, and lists with IDs
   - List available statuses
   - Find items by name (case-insensitive)
   - View task relationships
+
+- 🔍 **Smart Name Resolution**
+  - Use names instead of IDs for lists and folders
+  - Global search across all spaces
+  - Case-insensitive matching
+  - Automatic location of items
 
 - 📝 **AI Integration**
   - Generate task descriptions with AI
@@ -81,17 +87,20 @@ You can get these values from:
 
 ### Available Tools
 
-1. **list_spaces**
-   - Lists all spaces and their lists with IDs
+1. **workspace_hierarchy**
+   - Lists complete hierarchy of the ClickUp workspace
+   - Shows spaces, folders, and lists with their IDs
    - Shows available statuses for each list
+   - Provides a tree view of your workspace organization
    - No parameters required
 
 2. **create_task**
    - Creates a new task in ClickUp
    - Required parameters:
-     - `listId`: ID of the list to create the task in
      - `name`: Name of the task
    - Optional parameters:
+     - `listId`: ID of the list (optional if listName provided)
+     - `listName`: Name of the list (optional if listId provided)
      - `description`: Task description
      - `status`: Task status
      - `priority`: Priority level (1-4)
@@ -101,7 +110,6 @@ You can get these values from:
 3. **create_bulk_tasks**
    - Creates multiple tasks simultaneously in a list
    - Required parameters:
-     - `listId`: ID of the list to create the tasks in
      - `tasks`: Array of task objects, each containing:
        - `name`: Name of the task (required)
        - `description`: Task description (optional)
@@ -109,6 +117,9 @@ You can get these values from:
        - `priority`: Priority level 1-4 (optional)
        - `dueDate`: Due date ISO string (optional)
        - `assignees`: Array of user IDs (optional)
+   - Optional parameters:
+     - `listId`: ID of the list (optional if listName provided)
+     - `listName`: Name of the list (optional if listId provided)
 
 4. **create_list**
    - Creates a new list in a space
@@ -147,13 +158,17 @@ You can get these values from:
    - Moves a task to a different list
    - Required parameters:
      - `taskId`: ID of the task to move
-     - `listId`: ID of the destination list
+   - Optional parameters:
+     - `listId`: ID of destination list (optional if listName provided)
+     - `listName`: Name of destination list (optional if listId provided)
 
 8. **duplicate_task**
    - Creates a copy of a task in a specified list
    - Required parameters:
      - `taskId`: ID of the task to duplicate
-     - `listId`: ID of the destination list
+   - Optional parameters:
+     - `listId`: ID of destination list (optional if listName provided)
+     - `listName`: Name of destination list (optional if listId provided)
 
 9. **update_task**
    - Updates an existing task
