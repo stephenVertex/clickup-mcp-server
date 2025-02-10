@@ -24,7 +24,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { ClickUpService } from "./services/clickup.js";
 import config from "./config.js";
-import { CreateTaskData, UpdateTaskData, ClickUpTask } from "./types/clickup.js";
+import { CreateTaskData, UpdateTaskData, ClickUpTask, CreateListData, CreateFolderData, BulkCreateTasksData } from "./types/clickup.js";
 
 /**
  * Type alias for a note object.
@@ -166,6 +166,57 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             }
           },
           required: ["listId", "name"]
+        }
+      },
+      {
+        name: "create_bulk_tasks",
+        description: "Create multiple tasks in a ClickUp list",
+        inputSchema: {
+          type: "object",
+          properties: {
+            listId: {
+              type: "string",
+              description: "ID of the list to create the tasks in"
+            },
+            tasks: {
+              type: "array",
+              description: "Array of tasks to create",
+              items: {
+                type: "object",
+                properties: {
+                  name: {
+                    type: "string",
+                    description: "Name of the task"
+                  },
+                  description: {
+                    type: "string",
+                    description: "Description of the task"
+                  },
+                  status: {
+                    type: "string",
+                    description: "Status of the task"
+                  },
+                  priority: {
+                    type: "number",
+                    description: "Priority level (1-4)"
+                  },
+                  dueDate: {
+                    type: "string",
+                    description: "Due date of the task (ISO string)"
+                  },
+                  assignees: {
+                    type: "array",
+                    items: {
+                      type: "number"
+                    },
+                    description: "Array of user IDs to assign to the task"
+                  }
+                },
+                required: ["name"]
+              }
+            }
+          },
+          required: ["listId", "tasks"]
         }
       },
       {
@@ -402,6 +453,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [{
             type: "text",
             text: `Created task ${task.id}: ${task.name}`
+          }]
+        };
+      }
+
+      case "create_bulk_tasks": {
+        const args = request.params.arguments as unknown as BulkCreateTasksData & { listId: string };
+        if (!args.listId || !args.tasks || !args.tasks.length) {
+          throw new Error("listId and at least one task are required");
+        }
+        const { listId, tasks } = args;
+        const createdTasks = await clickup.createBulkTasks(listId, { tasks });
+        return {
+          content: [{
+            type: "text",
+            text: `Created ${createdTasks.length} tasks:\n${createdTasks.map(task => `- ${task.id}: ${task.name}`).join('\n')}`
           }]
         };
       }

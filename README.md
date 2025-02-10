@@ -58,12 +58,26 @@ CLICKUP_API_KEY=your_api_key_here
 TEAM_ID=your_team_id_here
 ```
 
-## Usage
+## Using with Cursor AI Composer
 
-### Starting the Server
+To add this server to Cursor AI Composer, follow these steps:
+
+1. Go to the Features section in the settings.
+2. Add the following command under MCP Servers:
+
 ```bash
-clickup-mcp-server
+npx -y @taazkareem/clickup-mcp-server \
+  --env CLICKUP_API_KEY=your_api_key_here \
+  --env TEAM_ID=your_team_id_here
 ```
+3. Replace `your_api_key_here` and `your_team_id_here` with your actual ClickUp credentials.
+4. Click on 'Save' to add the server.
+
+You can get these values from:
+- `CLICKUP_API_KEY`: Get from [ClickUp Settings > Apps](https://app.clickup.com/settings/apps)
+- `TEAM_ID`: Your ClickUp Team ID (found in the URL when viewing your workspace or via API)
+
+> **Security Note**: Your API key will be stored securely and will not be exposed to AI models.
 
 ### Available Tools
 
@@ -84,7 +98,19 @@ clickup-mcp-server
      - `dueDate`: Due date (ISO string)
      - `assignees`: Array of user IDs
 
-3. **create_list**
+3. **create_bulk_tasks**
+   - Creates multiple tasks simultaneously in a list
+   - Required parameters:
+     - `listId`: ID of the list to create the tasks in
+     - `tasks`: Array of task objects, each containing:
+       - `name`: Name of the task (required)
+       - `description`: Task description (optional)
+       - `status`: Task status (optional)
+       - `priority`: Priority level 1-4 (optional)
+       - `dueDate`: Due date ISO string (optional)
+       - `assignees`: Array of user IDs (optional)
+
+4. **create_list**
    - Creates a new list in a space
    - Required parameters:
      - `name`: Name of the list
@@ -96,7 +122,7 @@ clickup-mcp-server
      - `priority`: Priority level (1-4)
      - `dueDate`: Due date (ISO string)
 
-4. **create_folder**
+5. **create_folder**
    - Creates a new folder in a space
    - Required parameters:
      - `name`: Name of the folder
@@ -105,7 +131,7 @@ clickup-mcp-server
      - `spaceName`: Name of the space (optional if spaceId provided)
      - `override_statuses`: Whether to override space statuses
 
-5. **create_list_in_folder**
+6. **create_list_in_folder**
    - Creates a new list within a folder
    - Required parameters:
      - `name`: Name of the list
@@ -117,19 +143,19 @@ clickup-mcp-server
      - `content`: List description
      - `status`: List status
 
-6. **move_task**
+7. **move_task**
    - Moves a task to a different list
    - Required parameters:
      - `taskId`: ID of the task to move
      - `listId`: ID of the destination list
 
-7. **duplicate_task**
+8. **duplicate_task**
    - Creates a copy of a task in a specified list
    - Required parameters:
      - `taskId`: ID of the task to duplicate
      - `listId`: ID of the destination list
 
-8. **update_task**
+9. **update_task**
    - Updates an existing task
    - Required parameters:
      - `taskId`: ID of the task to update
@@ -180,27 +206,6 @@ The server provides clear error messages for common scenarios:
 - Items not found
 - Permission issues
 - API errors
-
-## Using with Cursor AI Composer
-
-To add this server to Cursor AI Composer, follow these steps:
-
-1. Go to the Features section in the settings.
-2. Add the following command under MCP Servers:
-
-```bash
-npx -y @taazkareem/clickup-mcp-server \
-  --env CLICKUP_API_KEY=your_api_key_here \
-  --env TEAM_ID=your_team_id_here
-```
-3. Replace `your_api_key_here` and `your_team_id_here` with your actual ClickUp credentials.
-4. Click on 'Save' to add the server.
-
-You can get these values from:
-- `CLICKUP_API_KEY`: Get from [ClickUp Settings > Apps](https://app.clickup.com/settings/apps)
-- `TEAM_ID`: Your ClickUp Team ID (found in the URL when viewing your workspace or via API)
-
-> **Security Note**: Your API key will be stored securely and will not be exposed to AI models.
 
 ## Development
 

@@ -62,6 +62,10 @@ export interface CreateTaskData {
   status?: string;
 }
 
+export interface BulkCreateTasksData {
+  tasks: Array<CreateTaskData>;
+}
+
 export interface CreateListData {
   name: string;
   content?: string;
