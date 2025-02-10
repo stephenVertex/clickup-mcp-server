@@ -58,12 +58,26 @@ CLICKUP_API_KEY=your_api_key_here
 TEAM_ID=your_team_id_here
 ```
 
-## Usage
+## Using with Cursor AI Composer
 
-### Starting the Server
+To add this server to Cursor AI Composer, follow these steps:
+
+1. Go to the Features section in the settings.
+2. Add the following command under MCP Servers:
+
 ```bash
-clickup-mcp-server
+npx -y @taazkareem/clickup-mcp-server \
+  --env CLICKUP_API_KEY=your_api_key_here \
+  --env TEAM_ID=your_team_id_here
 ```
+3. Replace `your_api_key_here` and `your_team_id_here` with your actual ClickUp credentials.
+4. Click on 'Save' to add the server.
+
+You can get these values from:
+- `CLICKUP_API_KEY`: Get from [ClickUp Settings > Apps](https://app.clickup.com/settings/apps)
+- `TEAM_ID`: Your ClickUp Team ID (found in the URL when viewing your workspace or via API)
+
+> **Security Note**: Your API key will be stored securely and will not be exposed to AI models.
 
 ### Available Tools
 
@@ -180,27 +194,6 @@ The server provides clear error messages for common scenarios:
 - Items not found
 - Permission issues
 - API errors
-
-## Using with Cursor AI Composer
-
-To add this server to Cursor AI Composer, follow these steps:
-
-1. Go to the Features section in the settings.
-2. Add the following command under MCP Servers:
-
-```bash
-npx -y @taazkareem/clickup-mcp-server \
-  --env CLICKUP_API_KEY=your_api_key_here \
-  --env TEAM_ID=your_team_id_here
-```
-3. Replace `your_api_key_here` and `your_team_id_here` with your actual ClickUp credentials.
-4. Click on 'Save' to add the server.
-
-You can get these values from:
-- `CLICKUP_API_KEY`: Get from [ClickUp Settings > Apps](https://app.clickup.com/settings/apps)
-- `TEAM_ID`: Your ClickUp Team ID (found in the URL when viewing your workspace or via API)
-
-> **Security Note**: Your API key will be stored securely and will not be exposed to AI models.
 
 ## Development
 
