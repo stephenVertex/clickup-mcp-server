@@ -1,0 +1,163 @@
+import axios, { AxiosInstance } from 'axios';
+import { 
+  ClickUpTask, 
+  ClickUpList, 
+  ClickUpSpace,
+  ClickUpFolder,
+  CreateTaskData,
+  UpdateTaskData,
+  CreateListData,
+  CreateFolderData
+} from '../types/clickup.js';
+
+export class ClickUpService {
+  private client: AxiosInstance;
+  private static instance: ClickUpService;
+
+  private constructor(apiKey: string) {
+    this.client = axios.create({
+      baseURL: 'https://api.clickup.com/api/v2',
+      headers: {
+        'Authorization': apiKey,
+        'Content-Type': 'application/json'
+      }
+    });
+  }
+
+  public static initialize(apiKey: string): ClickUpService {
+    if (!ClickUpService.instance) {
+      ClickUpService.instance = new ClickUpService(apiKey);
+    }
+    return ClickUpService.instance;
+  }
+
+  public static getInstance(): ClickUpService {
+    if (!ClickUpService.instance) {
+      throw new Error('ClickUpService not initialized. Call initialize() first.');
+    }
+    return ClickUpService.instance;
+  }
+
+  // Tasks
+  async getTasks(listId: string): Promise<{ tasks: ClickUpTask[], statuses: string[] }> {
+    const response = await this.client.get(`/list/${listId}/task`);
+    const tasks = response.data.tasks;
+    const statuses = [...new Set(tasks.map((task: ClickUpTask) => task.status.status))] as string[];
+    return { tasks, statuses };
+  }
+
+  async getTask(taskId: string): Promise<ClickUpTask> {
+    const response = await this.client.get(`/task/${taskId}`);
+    return response.data;
+  }
+
+  async createTask(listId: string, data: CreateTaskData): Promise<ClickUpTask> {
+    const response = await this.client.post(`/list/${listId}/task`, data);
+    return response.data;
+  }
+
+  async updateTask(taskId: string, data: UpdateTaskData): Promise<ClickUpTask> {
+    const response = await this.client.put(`/task/${taskId}`, data);
+    return response.data;
+  }
+
+  async deleteTask(taskId: string): Promise<void> {
+    await this.client.delete(`/task/${taskId}`);
+  }
+
+  // Lists
+  async getLists(spaceId: string): Promise<ClickUpList[]> {
+    const response = await this.client.get(`/space/${spaceId}/list`);
+    return response.data.lists;
+  }
+
+  async getAllLists(teamId: string): Promise<ClickUpList[]> {
+    const response = await this.client.get(`/team/${teamId}/list`);
+    return response.data.lists;
+  }
+
+  async getList(listId: string): Promise<ClickUpList> {
+    const response = await this.client.get(`/list/${listId}`);
+    return response.data;
+  }
+
+  // Spaces
+  async getSpaces(teamId: string): Promise<ClickUpSpace[]> {
+    const response = await this.client.get(`/team/${teamId}/space`);
+    return response.data.spaces;
+  }
+
+  async getSpace(spaceId: string): Promise<ClickUpSpace> {
+    const response = await this.client.get(`/space/${spaceId}`);
+    return response.data;
+  }
+
+  async findSpaceByName(teamId: string, spaceName: string): Promise<ClickUpSpace | null> {
+    const spaces = await this.getSpaces(teamId);
+    return spaces.find(space => space.name.toLowerCase() === spaceName.toLowerCase()) || null;
+  }
+
+  async createList(spaceId: string, data: CreateListData): Promise<ClickUpList> {
+    const response = await this.client.post(`/space/${spaceId}/list`, data);
+    return response.data;
+  }
+
+  // Folders
+  async getFolders(spaceId: string): Promise<ClickUpFolder[]> {
+    const response = await this.client.get(`/space/${spaceId}/folder`);
+    return response.data.folders;
+  }
+
+  async getFolder(folderId: string): Promise<ClickUpFolder> {
+    const response = await this.client.get(`/folder/${folderId}`);
+    return response.data;
+  }
+
+  async createFolder(spaceId: string, data: CreateFolderData): Promise<ClickUpFolder> {
+    const response = await this.client.post(`/space/${spaceId}/folder`, data);
+    return response.data;
+  }
+
+  async deleteFolder(folderId: string): Promise<void> {
+    await this.client.delete(`/folder/${folderId}`);
+  }
+
+  async createListInFolder(folderId: string, data: CreateListData): Promise<ClickUpList> {
+    const response = await this.client.post(`/folder/${folderId}/list`, data);
+    return response.data;
+  }
+
+  async findFolderByName(spaceId: string, folderName: string): Promise<ClickUpFolder | null> {
+    const folders = await this.getFolders(spaceId);
+    return folders.find(folder => folder.name.toLowerCase() === folderName.toLowerCase()) || null;
+  }
+
+  // Additional helper methods
+  async moveTask(taskId: string, listId: string): Promise<ClickUpTask> {
+    const response = await this.client.post(`/task/${taskId}`, {
+      list: listId
+    });
+    return response.data;
+  }
+
+  async duplicateTask(taskId: string, listId: string): Promise<ClickUpTask> {
+    const response = await this.client.post(`/task/${taskId}/duplicate`, {
+      list: listId
+    });
+    return response.data;
+  }
+
+  async deleteList(listId: string): Promise<void> {
+    await this.client.delete(`/list/${listId}`);
+  }
+
+  async updateList(listId: string, data: Partial<CreateListData>): Promise<ClickUpList> {
+    const response = await this.client.put(`/list/${listId}`, data);
+    return response.data;
+  }
+
+  async findListByName(spaceId: string, listName: string): Promise<ClickUpList | null> {
+    const lists = await this.getLists(spaceId);
+    return lists.find(list => list.name.toLowerCase() === listName.toLowerCase()) || null;
+  }
+} 
