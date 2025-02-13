@@ -1,17 +1,5 @@
 #!/usr/bin/env node
 
-/**
- * This is a template MCP server that implements a simple ClickUp task management system.
- * It demonstrates core MCP concepts like resources, tools, and prompts by allowing:
- * - Listing ClickUp tasks as resources
- * - Reading individual ClickUp tasks
- * - Creating new ClickUp tasks via a tool
- * - Updating existing ClickUp tasks via a tool
- * - Summarizing all ClickUp tasks via a prompt
- * - Analyzing task priorities via a prompt
- * - Generating detailed descriptions for tasks via a prompt
- */
-
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -24,32 +12,37 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { ClickUpService } from "./services/clickup.js";
 import config from "./config.js";
-import { CreateTaskData, UpdateTaskData, ClickUpTask, CreateListData, CreateFolderData, BulkCreateTasksData } from "./types/clickup.js";
+import { handleWorkspaceHierarchy, handleCreateTask } from "./handlers/tools.js";
+import { handleSummarizeTasks, handleAnalyzeTaskPriorities } from "./handlers/prompts.js";
+import { getAllTasks } from "./utils/resolvers.js";
+import { 
+  CreateTaskData, 
+  CreateListData, 
+  CreateFolderData, 
+  BulkCreateTasksData 
+} from "./types/clickup.js";
 
-/**
- * Type alias for a note object.
- */
-type Note = { title: string, content: string };
-
-/**
- * Simple in-memory storage for notes.
- * In a real implementation, this would likely be backed by a database.
- */
-const notes: { [id: string]: Note } = {
-  "1": { title: "First Note", content: "This is note 1" },
-  "2": { title: "Second Note", content: "This is note 2" }
-};
+console.log('Server starting up...');
+console.log('Config loaded:', {
+  clickupApiKey: config.clickupApiKey ? '***' : 'missing',
+  teamId: config.teamId || 'missing'
+});
 
 // Initialize ClickUp service
-const clickup = ClickUpService.initialize(config.clickupApiKey);
+let clickup: ClickUpService;
+try {
+  console.log('Initializing ClickUp service...');
+  clickup = ClickUpService.initialize(config.clickupApiKey);
+  console.log('ClickUp service initialized successfully');
+} catch (error) {
+  console.error("Failed to initialize ClickUp service:", error);
+  process.exit(1);
+}
 
-/**
- * Create an MCP server with capabilities for resources (to list/read ClickUp tasks),
- * tools (to create/update ClickUp tasks), and prompts (to summarize/analyze ClickUp tasks).
- */
+console.log('Creating MCP server...');
 const server = new Server(
   {
-    name: "clickup-mcp-server",
+    name: "clickup",
     version: "0.1.0",
   },
   {
@@ -60,43 +53,33 @@ const server = new Server(
     },
   }
 );
+console.log('MCP server created');
 
 /**
  * Handler for listing available ClickUp tasks as resources.
- * Each task is exposed as a resource with:
- * - A clickup:// URI scheme
- * - JSON MIME type
- * - Human readable name and description (including the task name and description)
  */
 server.setRequestHandler(ListResourcesRequestSchema, async () => {
+  console.log('Handling ListResources request');
   try {
-    const spaces = await clickup.getSpaces(config.teamId);
-    const resources = [];
-
-    for (const space of spaces) {
-      const lists = await clickup.getLists(space.id);
-      for (const list of lists) {
-        const { tasks } = await clickup.getTasks(list.id);
-        resources.push(...tasks.map((task: ClickUpTask) => ({
-          uri: `clickup://task/${task.id}`,
-          mimeType: "application/json",
-          name: task.name,
-          description: task.description || `Task in ${list.name} (${space.name})`,
-          tags: []
-        })));
-      }
-    }
-
-    return { resources };
+    const { tasks, spaces } = await getAllTasks(clickup, config.teamId);
+    
+    return {
+      resources: tasks.map(task => ({
+        uri: `clickup://task/${task.id}`,
+        mimeType: "application/json",
+        name: task.name,
+        description: task.description || `Task in ${task.list.name} (${task.space.name})`,
+        tags: []
+      }))
+    };
   } catch (error) {
-    console.error('Error listing resources:', error);
+    console.error('Error in ListResources:', error);
     throw error;
   }
 });
 
 /**
  * Handler for reading the contents of a specific ClickUp task.
- * Takes a clickup:// URI and returns the task content as JSON.
  */
 server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
   try {
@@ -119,15 +102,15 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
 });
 
 /**
- * Handler that lists available tools.
- * Exposes tools for listing spaces, creating tasks, and updating tasks.
+ * Handler for listing available tools.
  */
 server.setRequestHandler(ListToolsRequestSchema, async () => {
+  console.log('Handling ListTools request');
   return {
     tools: [
       {
         name: "workspace_hierarchy",
-        description: "List complete hierarchy of the ClickUp workspace, including spaces, folders, lists, and their IDs and available statuses",
+        description: "List complete hierarchy of the ClickUp workspace",
         inputSchema: {
           type: "object",
           properties: {},
@@ -416,62 +399,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 });
 
 /**
- * Handler for the CallToolRequestSchema.
- * Handles the execution of tools like listing spaces, creating tasks, and updating tasks.
+ * Handler for executing tools.
  */
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     switch (request.params.name) {
       case "workspace_hierarchy": {
-        const spaces = await clickup.getSpaces(config.teamId);
-        const allLists = await clickup.getAllLists(config.teamId);
-        let output = "ClickUp Workspace Hierarchy:\n\n";
-
-        for (const space of spaces) {
-          output += `Space: ${space.name} (ID: ${space.id})\n`;
-          
-          // Get folders in this space
-          const folders = await clickup.getFolders(space.id);
-          for (const folder of folders) {
-            output += `  ├─ Folder: ${folder.name} (ID: ${folder.id})\n`;
-            // Get lists in this folder
-            const folderLists = folder.lists || [];
-            for (const list of folderLists) {
-              const { statuses } = await clickup.getTasks(list.id);
-              output += `  │  └─ List: ${list.name} (ID: ${list.id})\n`;
-              output += `  │     Available Statuses: ${statuses.join(', ')}\n`;
-            }
-          }
-          
-          // Get lists directly in space (not in folders)
-          const spaceLists = allLists.filter(list => 
-            list.space && 
-            list.space.id === space.id && 
-            !folders.some(folder => folder.lists?.some(fl => fl.id === list.id))
-          );
-          
-          if (spaceLists.length > 0) {
-            output += "  ├─ Lists (not in folders):\n";
-            for (const list of spaceLists) {
-              const { statuses } = await clickup.getTasks(list.id);
-              output += `  │  └─ List: ${list.name} (ID: ${list.id})\n`;
-              output += `  │     Available Statuses: ${statuses.join(', ')}\n`;
-            }
-          }
-          output += "\n";
-        }
-
-        // Add lists without spaces at the end
-        const listsWithoutSpace = allLists.filter(list => !list.space);
-        if (listsWithoutSpace.length > 0) {
-          output += "Lists without assigned spaces:\n";
-          for (const list of listsWithoutSpace) {
-            const { statuses } = await clickup.getTasks(list.id);
-            output += `  └─ List: ${list.name} (ID: ${list.id})\n`;
-            output += `    Available Statuses: ${statuses.join(', ')}\n`;
-          }
-        }
-
+        const output = await handleWorkspaceHierarchy(clickup, config.teamId);
         return {
           content: [{
             type: "text",
@@ -481,23 +415,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case "create_task": {
-        const args = request.params.arguments as unknown as CreateTaskData & { listId?: string, listName?: string };
-        let listId = args.listId;
-
-        if (!listId && args.listName) {
-          const result = await clickup.findListByNameGlobally(config.teamId, args.listName);
-          if (!result) {
-            throw new Error(`List with name "${args.listName}" not found`);
-          }
-          listId = result.list.id;
-        }
-
-        if (!listId) {
-          throw new Error("Either listId or listName is required");
-        }
-
-        const { listId: _, listName: __, ...taskData } = args;
-        const task = await clickup.createTask(listId, taskData);
+        const args = request.params.arguments as unknown as CreateTaskData & { listId?: string; listName?: string };
+        const task = await handleCreateTask(clickup, config.teamId, args);
         return {
           content: [{
             type: "text",
@@ -640,46 +559,39 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         let folderId = args.folderId;
         if (!folderId && args.folderName) {
-          let spaceId = args.spaceId;
-          if (!spaceId && args.spaceName) {
-            const space = await clickup.findSpaceByName(config.teamId, args.spaceName);
-            if (!space) {
-              throw new Error(`Space with name "${args.spaceName}" not found`);
-            }
-            spaceId = space.id;
+          const result = await clickup.findFolderByNameGlobally(config.teamId, args.folderName);
+          if (!result) {
+            throw new Error(`Folder with name "${args.folderName}" not found`);
           }
-          
-          if (!spaceId) {
-            throw new Error("Either spaceId or spaceName must be provided");
-          }
+          folderId = result.folder.id;
+        }
 
-          const { spaceId: _, spaceName: ___, ...listData } = args;
-          const list = await clickup.createListInFolder(spaceId, listData);
+        if (!folderId) {
+          throw new Error("Either folderId or folderName is required");
+        }
+
+        const listData = {
+          name: args.name,
+          content: args.content,
+          status: args.status
+        };
+
+        try {
+          const list = await clickup.createListInFolder(folderId, listData);
           return {
             content: [{
               type: "text",
               text: `Created list ${list.id}: ${list.name} in folder`
             }]
           };
+        } catch (error: any) {
+          throw new Error(`Failed to create list: ${error.message}`);
         }
-
-        if (!folderId) {
-          throw new Error("Either folderId or folderName must be provided");
-        }
-
-        const { spaceId: _, spaceName: ___, ...listData } = args;
-        const list = await clickup.createListInFolder(folderId, listData);
-        return {
-          content: [{
-            type: "text",
-            text: `Created list ${list.id}: ${list.name} in folder`
-          }]
-        };
       }
 
       case "move_task": {
-        const args = request.params.arguments as { 
-          taskId: string; 
+        const args = request.params.arguments as {
+          taskId: string;
           listId?: string;
           listName?: string;
         };
@@ -711,8 +623,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case "duplicate_task": {
-        const args = request.params.arguments as { 
-          taskId: string; 
+        const args = request.params.arguments as {
+          taskId: string;
           listId?: string;
           listName?: string;
         };
@@ -744,25 +656,27 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case "update_task": {
-        const args = request.params.arguments as { 
-          taskId: string; 
-          name: string;
-          description: string;
-          status: string;
-          priority: number;
-          dueDate: string;
+        const args = request.params.arguments as {
+          taskId: string;
+          name?: string;
+          description?: string;
+          status?: string;
+          priority?: number;
+          due_date?: string;
         };
         
-        if (!args.taskId || !args.name || !args.description || !args.status || !args.priority || !args.dueDate) {
-          throw new Error("All arguments are required");
+        if (!args.taskId) {
+          throw new Error("taskId is required");
         }
+
+        const dueDate = args.due_date ? new Date(args.due_date).getTime() : undefined;
 
         const task = await clickup.updateTask(args.taskId, {
           name: args.name,
           description: args.description,
           status: args.status,
           priority: args.priority,
-          dueDate: args.dueDate
+          due_date: dueDate
         });
         return {
           content: [{
@@ -771,8 +685,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           }]
         };
       }
+
+      default:
+        throw new Error("Unknown tool");
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error executing tool:', error);
     throw error;
   }
@@ -780,7 +697,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 /**
  * Handler for listing available prompts.
- * Exposes prompts for summarizing/analyzing ClickUp tasks.
  */
 server.setRequestHandler(ListPromptsRequestSchema, async () => {
   return {
@@ -792,10 +708,6 @@ server.setRequestHandler(ListPromptsRequestSchema, async () => {
       {
         name: "analyze_task_priorities",
         description: "Analyze task priorities"
-      },
-      {
-        name: "generate_task_descriptions",
-        description: "Generate detailed descriptions for tasks"
       }
     ]
   };
@@ -803,19 +715,12 @@ server.setRequestHandler(ListPromptsRequestSchema, async () => {
 
 /**
  * Handler for getting a specific prompt.
- * Takes a prompt name and returns the prompt content.
  */
 server.setRequestHandler(GetPromptRequestSchema, async (request) => {
   try {
     switch (request.params.name) {
       case "summarize_tasks": {
-        const tasks = await clickup.getAllTasks(config.teamId);
-        let output = "Summarized Tasks:\n\n";
-
-        for (const task of tasks) {
-          output += `- ${task.name}: ${task.description}\n`;
-        }
-
+        const output = await handleSummarizeTasks(clickup, config.teamId);
         return {
           content: [{
             type: "text",
@@ -825,37 +730,7 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
       }
 
       case "analyze_task_priorities": {
-        const tasks = await clickup.getAllTasks(config.teamId);
-        const priorities = tasks.map(task => task.priority);
-        const uniquePriorities = [...new Set(priorities)];
-        const priorityCounts = uniquePriorities.map(priority => ({
-          priority: priority,
-          count: priorities.filter(p => p === priority).length
-        }));
-
-        let output = "Task Priorities Analysis:\n\n";
-        output += "Available Priorities: " + uniquePriorities.join(', ') + "\n\n";
-        output += "Priority Counts:\n";
-        for (const priority of priorityCounts) {
-          output += `- Priority ${priority.priority}: ${priority.count}\n`;
-        }
-
-        return {
-          content: [{
-            type: "text",
-            text: output
-          }]
-        };
-      }
-
-      case "generate_task_descriptions": {
-        const tasks = await clickup.getAllTasks(config.teamId);
-        let output = "Generated Task Descriptions:\n\n";
-
-        for (const task of tasks) {
-          output += `- ${task.name}: ${task.description}\n`;
-        }
-
+        const output = await handleAnalyzeTaskPriorities(clickup, config.teamId);
         return {
           content: [{
             type: "text",
@@ -873,4 +748,29 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
   }
 });
 
-server.start();
+// Start the server
+console.log('Setting up transport...');
+const transport = new StdioServerTransport();
+
+// Connect the server to the transport
+console.log('Connecting server to transport...');
+server.connect(transport).catch(error => {
+  console.error('Error connecting server to transport:', error);
+  process.exit(1);
+});
+
+// Handle process signals
+process.on('SIGINT', () => {
+  console.log('Received SIGINT. Shutting down...');
+  transport.close();
+});
+
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM. Shutting down...');
+  transport.close();
+});
+
+// Prevent unhandled promise rejections from crashing the server
+process.on('unhandledRejection', (error) => {
+  console.error('Unhandled promise rejection:', error);
+});

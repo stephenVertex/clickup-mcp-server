@@ -41,7 +41,7 @@
   },
   "homepage": "https://github.com/taazkareem/clickup-mcp-server#readme",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "0.6.0",
+    "@modelcontextprotocol/sdk": "^1.4.1",
     "axios": "^1.6.7",
     "dotenv": "^16.4.1"
   },
