@@ -1,14 +1,3 @@
-import dotenv from 'dotenv';
-import { config } from 'process';
-
-// Load environment variables from .env file
-dotenv.config();
-
-interface Config {
-  clickupApiKey: string;
-  teamId: string;
-}
-
 // Parse command line arguments for --env flags
 const args = process.argv.slice(2);
 const envArgs: { [key: string]: string } = {};
@@ -21,9 +10,14 @@ for (let i = 0; i < args.length; i++) {
   }
 }
 
+interface Config {
+  clickupApiKey: string;
+  teamId: string;
+}
+
 const configuration: Config = {
-  clickupApiKey: envArgs.clickupApiKey || process.env.CLICKUP_API_KEY || '',
-  teamId: envArgs.teamId || process.env.TEAM_ID || '',
+  clickupApiKey: envArgs.clickupApiKey || '',
+  teamId: envArgs.teamId || '',
 };
 
 // Check for missing environment variables
