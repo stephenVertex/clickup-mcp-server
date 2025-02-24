@@ -47,61 +47,28 @@ npx -y @taazkareem/clickup-mcp-server --env CLICKUP_API_KEY=your_api_key_here --
 
 ## Available Tools
 
-### Workspace Tools
-**get_workspace_hierarchy**
-Returns complete workspace structure (spaces, folders, lists). No parameters required.
-
-### Task Tools
-**get_tasks** `(listId|listName)`
-Get tasks from list with optional filters (archived, page, order_by, reverse, subtasks, statuses, include_closed, assignees, due_date_gt/lt, custom_fields).
-
-**get_task** `(taskId|taskName, ?listName)`
-Get detailed task info including attachments and custom fields.
-
-**create_task** `(listId|listName, taskName)`
-Create task with optional description (markdown), status, priority (1-4), dueDate.
-
-**create_bulk_tasks** `(listId|listName, tasks[])`
-Bulk create tasks with automatic rate limiting. Each task: name (required), description, status, priority, dueDate (optional).
-
-**update_task** `(taskId|taskName, ?listName)`
-Update task name, description, status, priority (1-4), dueDate.
-
-**delete_task** `(taskId|taskName, ?listName)`
-Permanently delete a task.
-
-**move_task** `(taskId|taskName, destinationListId|destinationListName, ?sourceListName)`
-Move task to different list, preserving task data.
-
-**duplicate_task** `(taskId|taskName, destinationListId|destinationListName, ?sourceListName)`
-Create copy of task in specified list.
-
-### List & Folder Tools
-**create_list** `(spaceId|spaceName, listName)`
-Create list with optional content, dueDate, priority (1-4), assignee.
-
-**create_folder** `(spaceId|spaceName, folderName, ?overrideStatuses)`
-Create folder in space.
-
-**create_list_in_folder** `(folderId|folderName, listName)`
-Create list in folder with optional content and status.
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| [get_workspace_hierarchy](docs/workspace.md) | Returns complete workspace structure (spaces, folders, lists) | None required |
+| [get_tasks](docs/tasks.md) | Get tasks from list with optional filters | `listId\|listName`, optional: archived, page, order_by, reverse, subtasks, statuses, include_closed, assignees, due_date_gt/lt, custom_fields |
+| [get_task](docs/tasks.md) | Get detailed task info including attachments and custom fields | `taskId\|taskName`, optional: `listName` |
+| [create_task](docs/tasks.md) | Create task with optional parameters | `listId\|listName`, `taskName`, optional: description (markdown), status, priority (1-4), dueDate |
+| [create_bulk_tasks](docs/tasks.md) | Bulk create tasks with automatic rate limiting | `listId\|listName`, `tasks[]` (Each task: name required, description, status, priority, dueDate optional) |
+| [update_task](docs/tasks.md) | Update task properties | `taskId\|taskName`, optional: `listName`, name, description, status, priority (1-4), dueDate |
+| [delete_task](docs/tasks.md) | Permanently delete a task | `taskId\|taskName`, optional: `listName` |
+| [move_task](docs/tasks.md) | Move task to different list | `taskId\|taskName`, `destinationListId\|destinationListName`, optional: `sourceListName` |
+| [duplicate_task](docs/tasks.md) | Create copy of task in specified list | `taskId\|taskName`, `destinationListId\|destinationListName`, optional: `sourceListName` |
+| [create_list](docs/lists.md) | Create list in space | `spaceId\|spaceName`, `listName`, optional: content, dueDate, priority (1-4), assignee |
+| [create_folder](docs/folders.md) | Create folder in space | `spaceId\|spaceName`, `folderName`, optional: `overrideStatuses` |
+| [create_list_in_folder](docs/lists.md) | Create list in folder | `folderId\|folderName`, `listName`, optional: content and status |
 
 ## Available Prompts
 
-1. **summarize_tasks**
-   - Basic task summary by status
-   - Lists tasks with their current states
-   - Shows task relationships within lists
-
-2. **analyze_priorities**
-   - Reviews current task priorities
-   - Suggests priority adjustments
-   - Recommends task sequencing
-
-3. **generate_description**
-   - Interactive prompt for creating task descriptions
-   - Helps structure task information
-   - Includes objectives, criteria, and dependencies
+| Prompt | Description | Features |
+|--------|-------------|-----------|
+| [summarize_tasks](docs/prompts.md) | Task summary and status overview | - Basic task summary by status<br>- Lists tasks with their current states<br>- Shows task relationships within lists |
+| [analyze_priorities](docs/prompts.md) | Priority analysis and recommendations | - Reviews current task priorities<br>- Suggests priority adjustments<br>- Recommends task sequencing |
+| [generate_description](docs/prompts.md) | Interactive task description generator | - Interactive prompt for creating task descriptions<br>- Helps structure task information<br>- Includes objectives, criteria, and dependencies |
 
 ## Error Handling
 
