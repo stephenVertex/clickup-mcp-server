@@ -47,224 +47,44 @@ npx -y @taazkareem/clickup-mcp-server --env CLICKUP_API_KEY=your_api_key_here --
 
 ## Available Tools
 
-1. **get_workspace_hierarchy**
-   - Gets complete hierarchy of spaces, folders, and lists
-   - No parameters required
-   - Returns tree structure showing:
-     ```
-     Workspace (root)
-     ├── Space A
-     │   ├── List 1
-     │   └── Folder 1
-     │       ├── List 2
-     │       └── List 3
-     └── Space B
-         └── List 4
-     ```
+### Workspace Tools
+**get_workspace_hierarchy**
+Returns complete workspace structure (spaces, folders, lists). No parameters required.
 
-2. **get_tasks**
-   - Gets tasks from a ClickUp list with optional filters
-   - List Identification (required):
-     ```
-     listId: "123"      # List ID from ClickUp
-     -- OR --
-     listName: "My List" # List name (case insensitive)
-     ```
-   - Optional Filters:
-     ```
-     archived: true/false        # Include archived tasks
-     page: number               # Page number for pagination
-     order_by: string          # Field to sort by
-     reverse: true/false       # Reverse sort order
-     subtasks: true/false      # Include subtasks
-     statuses: ["status1",..] # Filter by status
-     include_closed: true/false # Include closed tasks
-     assignees: ["user1",..]   # Filter by assignee
-     due_date_gt: timestamp    # Due after date
-     due_date_lt: timestamp    # Due before date
-     custom_fields: {...}      # Filter by custom fields
-     ```
+### Task Tools
+**get_tasks** `(listId|listName)`
+Get tasks from list with optional filters (archived, page, order_by, reverse, subtasks, statuses, include_closed, assignees, due_date_gt/lt, custom_fields).
 
-3. **get_task**
-   - Gets detailed information about a specific task
-   - Task Identification (required):
-     ```
-     taskId: "123"       # Task ID from ClickUp
-     -- OR --
-     taskName: "My Task" # Task name (case insensitive)
-     ```
-   - Optional:
-     ```
-     listName: "My List" # Narrow search to specific list
-     ```
-   - Returns full task details including attachments and custom fields
+**get_task** `(taskId|taskName, ?listName)`
+Get detailed task info including attachments and custom fields.
 
-4. **create_task**
-   - Creates a new task in ClickUp
-   - List Identification (required):
-     ```
-     listId: "123"      # List ID from ClickUp
-     -- OR --
-     listName: "My List" # List name (case insensitive)
-     ```
-   - Task Details:
-     ```
-     # Required
-     taskName: "New Task"  # Name of the task to create
+**create_task** `(listId|listName, taskName)`
+Create task with optional description (markdown), status, priority (1-4), dueDate.
 
-     # Optional
-     description: "..."    # Task description (markdown supported)
-     status: "In Progress" # Task status
-     priority: 1-4        # Priority level (1=Urgent, 4=Low)
-     dueDate: timestamp   # Due date
-     ```
+**create_bulk_tasks** `(listId|listName, tasks[])`
+Bulk create tasks with automatic rate limiting. Each task: name (required), description, status, priority, dueDate (optional).
 
-5. **create_bulk_tasks**
-   - Creates multiple tasks in a list
-   - List Identification (required):
-     ```
-     listId: "123"      # List ID from ClickUp
-     -- OR --
-     listName: "My List" # List name (case insensitive)
-     ```
-   - Tasks Array (required):
-     ```
-     tasks: [
-       {
-         taskName: "Task 1",    # Required
-         description: "...",    # Optional
-         status: "In Progress", # Optional
-         priority: 1-4,        # Optional
-         dueDate: timestamp    # Optional
-       },
-       // ... more tasks
-     ]
-     ```
-   - Handles rate limiting automatically
+**update_task** `(taskId|taskName, ?listName)`
+Update task name, description, status, priority (1-4), dueDate.
 
-6. **update_task**
-   - Updates an existing task
-   - Task Identification (required):
-     ```
-     taskId: "123"       # Task ID from ClickUp
-     -- OR --
-     taskName: "My Task" # Task name (case insensitive)
-     ```
-   - Optional Updates:
-     ```
-     listName: "My List"     # Narrow search to specific list
-     newName: "Updated Task" # New task name
-     description: "..."      # New description
-     status: "Done"         # New status
-     priority: 1-4          # New priority
-     dueDate: timestamp     # New due date
-     ```
+**delete_task** `(taskId|taskName, ?listName)`
+Permanently delete a task.
 
-7. **delete_task**
-   - Permanently deletes a task
-   - Task Identification (required):
-     ```
-     taskId: "123"       # Task ID from ClickUp
-     -- OR --
-     taskName: "My Task" # Task name (case insensitive)
-     ```
-   - Optional:
-     ```
-     listName: "My List" # Narrow search to specific list
-     ```
+**move_task** `(taskId|taskName, destinationListId|destinationListName, ?sourceListName)`
+Move task to different list, preserving task data.
 
-8. **move_task**
-   - Moves a task to a different list
-   - Source Task (required):
-     ```
-     taskId: "123"       # Task ID from ClickUp
-     -- OR --
-     taskName: "My Task" # Task name (case insensitive)
-     ```
-   - Destination List (required):
-     ```
-     destinationListId: "456"      # Target list ID
-     -- OR --
-     destinationListName: "My List" # Target list name
-     ```
-   - Optional:
-     ```
-     sourceListName: "Old List" # Narrow task search to specific list
-     ```
+**duplicate_task** `(taskId|taskName, destinationListId|destinationListName, ?sourceListName)`
+Create copy of task in specified list.
 
-9. **duplicate_task**
-   - Creates a copy of a task in specified list
-   - Source Task (required):
-     ```
-     taskId: "123"       # Task ID from ClickUp
-     -- OR --
-     taskName: "My Task" # Task name (case insensitive)
-     ```
-   - Destination List (required):
-     ```
-     destinationListId: "456"      # Target list ID
-     -- OR --
-     destinationListName: "My List" # Target list name
-     ```
-   - Optional:
-     ```
-     sourceListName: "Current List" # Narrow task search to specific list
-     ```
+### List & Folder Tools
+**create_list** `(spaceId|spaceName, listName)`
+Create list with optional content, dueDate, priority (1-4), assignee.
 
-10. **create_list**
-    - Creates a new list in a space
-    - Space Identification (required):
-      ```
-      spaceId: "123"       # Space ID from ClickUp
-      -- OR --
-      spaceName: "My Space" # Space name (case insensitive)
-      ```
-    - List Details:
-      ```
-      # Required
-      listName: "New List" # Name for the new list
+**create_folder** `(spaceId|spaceName, folderName, ?overrideStatuses)`
+Create folder in space.
 
-      # Optional
-      content: "..."      # List description
-      dueDate: timestamp  # List due date
-      priority: 1-4       # List priority
-      assignee: "user_id" # Assign to user
-      ```
-
-11. **create_folder**
-    - Creates a new folder in a space
-    - Space Identification (required):
-      ```
-      spaceId: "123"       # Space ID from ClickUp
-      -- OR --
-      spaceName: "My Space" # Space name (case insensitive)
-      ```
-    - Folder Details:
-      ```
-      # Required
-      folderName: "New Folder" # Name for the new folder
-
-      # Optional
-      overrideStatuses: true/false # Override space statuses
-      ```
-
-12. **create_list_in_folder**
-    - Creates a new list within a folder
-    - Folder Identification (required):
-      ```
-      folderId: "123"        # Folder ID from ClickUp
-      -- OR --
-      folderName: "My Folder" # Folder name (case insensitive)
-      ```
-    - List Details:
-      ```
-      # Required
-      listName: "New List" # Name for the new list
-
-      # Optional
-      content: "..."      # List description
-      status: "Active"    # Initial list status
-      ```
+**create_list_in_folder** `(folderId|folderName, listName)`
+Create list in folder with optional content and status.
 
 ## Available Prompts
 
