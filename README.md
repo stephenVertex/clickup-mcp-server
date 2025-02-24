@@ -2,38 +2,20 @@
 
 A Model Context Protocol (MCP) server for integrating ClickUp tasks with AI applications. This server allows AI agents to interact with ClickUp tasks, spaces, lists, and folders through a standardized protocol.
 
-## Quick Start (Recommended)
+## Quick Start
 
-1. Install the server:
-```bash
-npm install -g @taazkareem/clickup-mcp-server
-```
+Directions for use with Cursor Composer Agent:
 
-2. Get your credentials:
+1. Get your credentials:
    - ClickUp API key from [ClickUp Settings](https://app.clickup.com/settings/apps)
    - Team ID from your ClickUp workspace URL
-
-3. Start the server:
+2. Go to Features in settings
+3. Add under MCP Servers:
 ```bash
-clickup-mcp-server --env CLICKUP_API_KEY=your_api_key_here --env TEAM_ID=your_team_id_here
+npx -y @taazkareem/clickup-mcp-server --env CLICKUP_API_KEY=your_api_key_here --env TEAM_ID=your_team_id_here
 ```
-
-> **Security Note**: Your API key will be stored securely and not exposed to AI models.
-
-## Using with Cursor AI Composer
-
-1. Go to Features in settings
-2. Add under MCP Servers:
-```bash
-clickup-mcp-server --env CLICKUP_API_KEY=your_api_key_here --env TEAM_ID=your_team_id_here
-```
-3. Replace the credentials and click Save
-
-## Alternative Installation
-Run directly without installing:
-```bash
-npx @taazkareem/clickup-mcp-server --env CLICKUP_API_KEY=your_api_key_here --env TEAM_ID=your_team_id_here
-```
+4. Replace the credentials and click Save
+5. Use Natural Language to interact with your ClickUp Workspace!
 
 ## Features
 
