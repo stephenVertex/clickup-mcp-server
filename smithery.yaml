@@ -7,15 +7,15 @@ startCommand:
     type: object
     required:
       - clickupApiKey
-      - teamId
+      - clickupTeamId
     properties:
       clickupApiKey:
         type: string
         description: Your ClickUp API key.
-      teamId:
+      clickupTeamId:
         type: string
         description: Your ClickUp Team ID.
   commandFunction:
     # A function that produces the CLI command to start the MCP on stdio.
     |-
-    (config) => ({ command: 'node', args: ['build/index.js'], env: { CLICKUP_API_KEY: config.clickupApiKey, TEAM_ID: config.teamId } })
+    (config) => ({ command: 'node', args: ['build/index.js'], env: { CLICKUP_API_KEY: config.clickupApiKey, CLICKUP_TEAM_ID: config.clickupTeamId } })

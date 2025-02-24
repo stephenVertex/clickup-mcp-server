@@ -33,7 +33,7 @@ COPY --from=builder /app/package.json ./
 
 # Set environment variables
 ENV CLICKUP_API_KEY=your_api_key_here
-ENV TEAM_ID=your_team_id_here
+ENV CLICKUP_TEAM_ID=your_team_id_here
 
 # Expose the desired port (if the server binds to a port)
 EXPOSE 8080
