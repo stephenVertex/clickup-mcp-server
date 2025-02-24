@@ -235,5 +235,3 @@
   - Added comprehensive documentation for ClickUpService class methods
   - Documented parameters and return types
   - Added examples where appropriate
-- [ ] Remove unused resource-related code
-- [ ] Clean up imports

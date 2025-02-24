@@ -10,7 +10,7 @@ Directions for use with Cursor Composer Agent:
    - ClickUp API key from [ClickUp Settings](https://app.clickup.com/settings/apps)
    - Team ID from your ClickUp workspace URL
 2. Go to Features in settings
-3. Enter a name, select type: command, and add under MCP Servers:
+3. Add under MCP Servers:
 ```bash
 npx -y @taazkareem/clickup-mcp-server --env CLICKUP_API_KEY=your_api_key_here --env CLICKUP_TEAM_ID=your_team_id_here
 ```
@@ -115,12 +115,9 @@ The server provides clear error messages for:
 
 ## Support the Developer
 
-If you find this project useful, please consider supporting the developer:
-Talib Kareem (taazkareem@icloud.com)
+If you find this project useful, please consider supporting
 
-[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-Support-orange)](https://www.buymeacoffee.com/taazkareem)
-
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M4 18h12l4-4h-12z" /><path d="M8 14l-4-4h12l4 4" /><path d="M16 10l4-4h-12l-4 4" /></svg><span style="vertical-align: middle;">**Solana Wallet:** `GjtRksihd7SWQw7hJSCDMcTxPHbgpNs7xPW3nFubNjVM`</span>
+[![Sponsor TaazKareem](https://img.shields.io/badge/Sponsor-TaazKareem-orange?logo=github)](https://github.com/sponsors/TaazKareem)
 
 ## Contributing
 

@@ -69,7 +69,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "get_workspace_hierarchy",
-        description: "Get the complete hierarchy of spaces, folders, and lists in the workspace.  -First check chat history for space, folder, and list names or IDs.  If not found, use this tool to get necessary information.",
+        description: "Get the complete hierarchy of spaces, folders, and lists in the workspace.  Important: If looking up information, first check chat history for space, folder, and list names or ID matches.  If not found, use this tool to get necessary information.",
         inputSchema: {
           type: "object",
           properties: {},
@@ -387,7 +387,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "get_tasks",
-        description: "Get tasks from a ClickUp list with optional filters. Supports direct name-based lookup for lists - no need to know the list ID. If the list doesn't exist, you can create it using create_list or create_list_in_folder.",
+        description: "Get tasks from a ClickUp list with optional filters. Supports direct name-based lookup for lists - no need to know the list ID. If the list doesn't exist, you can create it using create_list or create_list_in_folder. ",
         inputSchema: {
           type: "object",
           properties: {
