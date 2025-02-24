@@ -41,7 +41,7 @@ import {
 } from "./types/clickup.js";
 
 // Initialize ClickUp service
-const clickup = ClickUpService.initialize(config.clickupApiKey, config.teamId);
+const clickup = ClickUpService.initialize(config.clickupApiKey, config.clickupTeamId);
 
 /**
  * Create an MCP server with capabilities for tools and prompts.
@@ -981,7 +981,7 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
   try {
     switch (request.params.name) {
       case "summarize_tasks": {
-        const spaces = await clickup.getSpaces(config.teamId);
+        const spaces = await clickup.getSpaces(config.clickupTeamId);
         const tasks = [];
 
         // Gather all tasks
@@ -1025,7 +1025,7 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
       }
 
       case "analyze_priorities": {
-        const spaces = await clickup.getSpaces(config.teamId);
+        const spaces = await clickup.getSpaces(config.clickupTeamId);
         const tasks = [];
 
         for (const space of spaces) {
