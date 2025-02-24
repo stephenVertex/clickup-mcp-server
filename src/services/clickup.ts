@@ -21,11 +21,11 @@ import {
 export class ClickUpService {
   private client: AxiosInstance;
   private static instance: ClickUpService;
-  private teamId: string;
+  private clickupTeamId: string;
   private rateLimitRemaining: number = 100; // Default to lowest tier limit
   private rateLimitReset: number = 0;
 
-  private constructor(apiKey: string, teamId: string) {
+  private constructor(apiKey: string, clickupTeamId: string) {
     this.client = axios.create({
       baseURL: 'https://api.clickup.com/api/v2',
       headers: {
@@ -59,7 +59,7 @@ export class ClickUpService {
       }
     );
 
-    this.teamId = teamId;
+    this.clickupTeamId = clickupTeamId;
   }
 
   /**
@@ -99,13 +99,13 @@ export class ClickUpService {
   /**
    * Initializes the ClickUpService singleton instance.
    * @param apiKey - The ClickUp API key for authentication
-   * @param teamId - The team/workspace ID to operate on
+   * @param clickupTeamId - The team/workspace ID to operate on
    * @returns The singleton instance of ClickUpService
    * @throws Error if initialization fails
    */
-  public static initialize(apiKey: string, teamId: string): ClickUpService {
+  public static initialize(apiKey: string, clickupTeamId: string): ClickUpService {
     if (!ClickUpService.instance) {
-      ClickUpService.instance = new ClickUpService(apiKey, teamId);
+      ClickUpService.instance = new ClickUpService(apiKey, clickupTeamId);
     }
     return ClickUpService.instance;
   }
@@ -288,13 +288,13 @@ export class ClickUpService {
 
   /**
    * Gets all lists in the workspace.
-   * @param teamId - ID of the team/workspace
+   * @param clickupTeamId - ID of the team/workspace
    * @returns Promise resolving to array of ClickUpList objects
    * @throws Error if the API request fails
    */
-  async getAllLists(teamId: string): Promise<ClickUpList[]> {
+  async getAllLists(clickupTeamId: string): Promise<ClickUpList[]> {
     return this.makeRequest(async () => {
-      const response = await this.client.get(`/team/${teamId}/list`);
+      const response = await this.client.get(`/team/${clickupTeamId}/list`);
       return response.data.lists;
     });
   }
@@ -313,9 +313,9 @@ export class ClickUpService {
   }
 
   // Spaces
-  async getSpaces(teamId: string): Promise<ClickUpSpace[]> {
+  async getSpaces(clickupTeamId: string): Promise<ClickUpSpace[]> {
     return this.makeRequest(async () => {
-      const response = await this.client.get(`/team/${teamId}/space`);
+      const response = await this.client.get(`/team/${clickupTeamId}/space`);
       return response.data.spaces;
     });
   }
@@ -327,8 +327,8 @@ export class ClickUpService {
     });
   }
 
-  async findSpaceByName(teamId: string, spaceName: string): Promise<ClickUpSpace | null> {
-    const spaces = await this.getSpaces(teamId);
+  async findSpaceByName(clickupTeamId: string, spaceName: string): Promise<ClickUpSpace | null> {
+    const spaces = await this.getSpaces(clickupTeamId);
     return spaces.find(space => space.name.toLowerCase() === spaceName.toLowerCase()) || null;
   }
 
@@ -520,7 +520,7 @@ export class ClickUpService {
 
   async findListByNameGlobally(listName: string): Promise<ClickUpList | null> {
     // First try the direct lists
-    const lists = await this.getAllLists(this.teamId);
+    const lists = await this.getAllLists(this.clickupTeamId);
     const directList = lists.find(list => list.name.toLowerCase() === listName.toLowerCase());
     if (directList) return directList;
 
@@ -550,9 +550,9 @@ export class ClickUpService {
    * @throws Error if API requests fail
    */
   async getWorkspaceHierarchy(): Promise<WorkspaceTree> {
-    const spaces = await this.getSpaces(this.teamId);
+    const spaces = await this.getSpaces(this.clickupTeamId);
     const root: WorkspaceTree['root'] = {
-      id: this.teamId,
+      id: this.clickupTeamId,
       name: 'Workspace',
       type: 'workspace',
       children: []
