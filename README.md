@@ -12,7 +12,9 @@ Directions for use with Cursor Composer Agent:
 2. Go to Features in settings
 3. Add under MCP Servers:
 ```bash
-npx -y @taazkareem/clickup-mcp-server --env CLICKUP_API_KEY=your_api_key_here --env CLICKUP_TEAM_ID=your_team_id_here
+npx -y @taazkareem/clickup-mcp-server \
+  --env CLICKUP_API_KEY=your_api_key_here \
+  --env CLICKUP_TEAM_ID=your_team_id_here
 ```
 4. Replace the credentials and click Save
 5. Use Natural Language to interact with your ClickUp Workspace!
@@ -31,7 +33,7 @@ npx -y @taazkareem/clickup-mcp-server --env CLICKUP_API_KEY=your_api_key_here --
   - List and folder management in spaces
   - Smart caching to reduce API calls
   - Name/ID-based item lookup
-  - Optimized task organization
+
 
 - 🔄 **Smart Integration**
   - Case-insensitive name lookups
@@ -47,28 +49,30 @@ npx -y @taazkareem/clickup-mcp-server --env CLICKUP_API_KEY=your_api_key_here --
 
 ## Available Tools
 
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| [get_workspace_hierarchy](docs/workspace.md) | Returns complete workspace structure (spaces, folders, lists) | None required |
-| [get_tasks](docs/tasks.md) | Get tasks from list with optional filters | `listId\|listName`, optional: archived, page, order_by, reverse, subtasks, statuses, include_closed, assignees, due_date_gt/lt, custom_fields |
-| [get_task](docs/tasks.md) | Get detailed task info including attachments and custom fields | `taskId\|taskName`, optional: `listName` |
-| [create_task](docs/tasks.md) | Create task with optional parameters | `listId\|listName`, `taskName`, optional: description (markdown), status, priority (1-4), dueDate |
-| [create_bulk_tasks](docs/tasks.md) | Bulk create tasks with automatic rate limiting | `listId\|listName`, `tasks[]` (Each task: name required, description, status, priority, dueDate optional) |
-| [update_task](docs/tasks.md) | Update task properties | `taskId\|taskName`, optional: `listName`, name, description, status, priority (1-4), dueDate |
-| [delete_task](docs/tasks.md) | Permanently delete a task | `taskId\|taskName`, optional: `listName` |
-| [move_task](docs/tasks.md) | Move task to different list | `taskId\|taskName`, `destinationListId\|destinationListName`, optional: `sourceListName` |
-| [duplicate_task](docs/tasks.md) | Create copy of task in specified list | `taskId\|taskName`, `destinationListId\|destinationListName`, optional: `sourceListName` |
-| [create_list](docs/lists.md) | Create list in space | `spaceId\|spaceName`, `listName`, optional: content, dueDate, priority (1-4), assignee |
-| [create_folder](docs/folders.md) | Create folder in space | `spaceId\|spaceName`, `folderName`, optional: `overrideStatuses` |
-| [create_list_in_folder](docs/lists.md) | Create list in folder | `folderId\|folderName`, `listName`, optional: content and status |
+| Tool | Description | Required Parameters |
+|------|-------------|-------------------|
+| [get_workspace_hierarchy](docs/tools.md#workspace-organization) | Get complete workspace structure | None |
+| [get_tasks](docs/tools.md#task-management) | Retrieve tasks from a list | `listId` or `listName` |
+| [get_task](docs/tools.md#task-management) | Get single task details | `taskId` or `taskName` |
+| [create_task](docs/tools.md#task-management) | Create a new task | `listId`, `taskName` |
+| [create_bulk_tasks](docs/tools.md#task-management) | Create multiple tasks | `listId`, `tasks[]` |
+| [update_task](docs/tools.md#task-management) | Modify task properties | `taskId` or `taskName` |
+| [delete_task](docs/tools.md#task-management) | Remove a task | `taskId` or `taskName` |
+| [move_task](docs/tools.md#task-management) | Move task to another list | `taskId`, `destinationListId` |
+| [duplicate_task](docs/tools.md#task-management) | Copy task to another list | `taskId`, `destinationListId` |
+| [create_list](docs/tools.md#list-management) | Create a new list | `spaceId`, `listName` |
+| [create_folder](docs/tools.md#folder-management) | Create a new folder | `spaceId`, `folderName` |
+| [create_list_in_folder](docs/tools.md#list-management) | Create list in folder | `folderId`, `listName` |
+
+See [full documentation](docs/tools.md) for optional parameters and advanced usage.
 
 ## Available Prompts
 
-| Prompt | Description | Features |
-|--------|-------------|-----------|
-| [summarize_tasks](docs/prompts.md) | Task summary and status overview | - Basic task summary by status<br>- Lists tasks with their current states<br>- Shows task relationships within lists |
-| [analyze_priorities](docs/prompts.md) | Priority analysis and recommendations | - Reviews current task priorities<br>- Suggests priority adjustments<br>- Recommends task sequencing |
-| [generate_description](docs/prompts.md) | Interactive task description generator | - Interactive prompt for creating task descriptions<br>- Helps structure task information<br>- Includes objectives, criteria, and dependencies |
+| Prompt | Purpose | Features |
+|--------|---------|----------|
+| [summarize_tasks](docs/tools.md#prompts) | Generate task overview | Status summary, relationships, current states |
+| [analyze_priorities](docs/tools.md#prompts) | Review task priorities | Priority review, adjustments, sequencing |
+| [generate_description](docs/tools.md#prompts) | Create task descriptions | Structure, objectives, dependencies |
 
 ## Error Handling
 
