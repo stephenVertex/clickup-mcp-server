@@ -10,7 +10,7 @@ Directions for use with Cursor Composer Agent:
    - ClickUp API key from [ClickUp Settings](https://app.clickup.com/settings/apps)
    - Team ID from your ClickUp workspace URL
 2. Go to Features in settings
-3. Add under MCP Servers:
+3. Enter a name, select type: command, and add under MCP Servers:
 ```bash
 npx -y @taazkareem/clickup-mcp-server --env CLICKUP_API_KEY=your_api_key_here --env CLICKUP_TEAM_ID=your_team_id_here
 ```
