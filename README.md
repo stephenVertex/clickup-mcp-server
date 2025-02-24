@@ -24,30 +24,31 @@ npx -y @taazkareem/clickup-mcp-server \
 ## Features
 
 - 🎯 **Task Management**
-  - Create, update, and delete tasks
-  - Move and duplicate tasks between lists, spaces, and folders 
-  - Bulk task operations
-  - Task details
+  - Create, update, and delete individual tasks
+  - Move and duplicate tasks between lists, spaces, and folders
+  - Create multiple tasks in bulk
+  - View and modify task details and properties
 
 - 📂 **Workspace Organization**
-  - Hierarchical tree structure with clear relationships
-  - Efficient navigation with path tracking
-  - List and folder management in spaces
-  - Smart caching to reduce API calls
-  - Name/ID-based item lookup
+  - Navigate complete workspace hierarchy (spaces, folders, lists)
+  - Tree structure with clear relationships
+  - Create and manage lists and folders
+  - Efficient path-based navigation
 
+- 🔄 **Integration Features**
+  - Name or ID-based item lookup
+  - Case-insensitive name matching
+  - Markdown formatting support
+  - Built-in API rate limiting
+  - Comprehensive error handling
+  - Clear parameter validation
 
-- 🔄 **Smart Integration**
-  - Case-insensitive name lookups
-  - Markdown support
-  - Automatic rate limiting
-  - Error handling
-
-- 🤖 **AI Assistance**
-  - Task analysis and insights
-  - Status summaries and priorities
-  - Description assistance
-  - Relationship mapping
+- 🤖 **AI-Powered Analysis**
+  - Task status summaries and overviews
+  - Priority analysis and recommendations
+  - Structured description generation
+  - Task relationship mapping
+  - Workspace organization insights
 
 ## Available Tools
 
