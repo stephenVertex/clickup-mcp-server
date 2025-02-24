@@ -15,8 +15,8 @@ interface Config {
 }
 
 const configuration: Config = {
-  clickupApiKey: envArgs.clickupApiKey || '',
-  clickupTeamId: envArgs.clickupTeamId || '',
+  clickupApiKey: envArgs.clickupApiKey || process.env.CLICKUP_API_KEY || '',
+  clickupTeamId: envArgs.clickupTeamId || process.env.CLICKUP_TEAM_ID || '',
 };
 
 const missingEnvVars = Object.entries(configuration)
