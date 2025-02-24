@@ -12,7 +12,7 @@ Directions for use with Cursor Composer Agent:
 2. Go to Features in settings
 3. Add under MCP Servers:
 ```bash
-npx -y @taazkareem/clickup-mcp-server --env CLICKUP_API_KEY=your_api_key_here --env TEAM_ID=your_team_id_here
+npx -y @taazkareem/clickup-mcp-server --env CLICKUP_API_KEY=your_api_key_here --env CLICKUP_TEAM_ID=your_team_id_here
 ```
 4. Replace the credentials and click Save
 5. Use Natural Language to interact with your ClickUp Workspace!
