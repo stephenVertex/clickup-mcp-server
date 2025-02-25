@@ -78,7 +78,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_task",
-        description: "Create a new task in ClickUp. Supports direct name-based lookup for lists - no need to know the list ID. -Status will use ClickUp defaults if not specified. If the specified list doesn't exist, you can create it using create_list or create_list_in_folder.",
+        description: "Create a new task in ClickUp. Supports direct name-based lookup for lists - no need to know the list ID. Status will use ClickUp defaults if not specified.  If the specified list doesn't exist, you can create it using create_list or create_list_in_folder.",
         inputSchema: {
           type: "object",
           properties: {
@@ -92,7 +92,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             name: {
               type: "string",
-              description: "Name of the task"
+              description: "Name of the task. Put a relevant emoji followed by a blank space before the name."
             },
             description: {
               type: "string",
@@ -108,7 +108,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             priority: {
               type: "number",
-              description: "Priority of the task (1-4), 1 is highest priority, 4 is lowest priority. -If not specified, the task will not set a priority."
+              description: "Priority of the task (1-4), 1 is urgent/highest priority, 4 is lowest priority. Only set this if priority is explicitly mentioned in the user's request."
             },
             dueDate: {
               type: "string",
@@ -120,7 +120,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_bulk_tasks",
-        description: "Create multiple tasks in a ClickUp list. Supports direct name-based lookup for lists - no need to know the list ID. -Tasks will use ClickUp default status if not specified. If the specified list doesn't exist, you can create it using create_list or create_list_in_folder.",
+        description: "Create multiple tasks in a ClickUp list. Supports direct name-based lookup for lists - no need to know the list ID. Tasks will use ClickUp default status if not specified. If the specified list doesn't exist, you can create it using create_list or create_list_in_folder.",
         inputSchema: {
           type: "object",
           properties: {
@@ -156,7 +156,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                   },
                   priority: {
                     type: "number",
-                    description: "Priority level (1-4), 1 is highest priority, 4 is lowest priority"
+                    description: "Priority level (1-4), 1 is urgent/highest priority, 4 is lowest priority. Only set this if priority is explicitly mentioned in the user's request."
                   },
                   dueDate: {
                     type: "string",
@@ -205,7 +205,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             priority: {
               type: "number",
-              description: "Priority of the list (1-4)"
+              description: "Priority of the list (1-4). Only set this if priority is explicitly mentioned in the user's request."
             },
             assignee: {
               type: "number",
@@ -375,7 +375,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             priority: {
               type: "number",
-              description: "New priority of the task (1-4)"
+              description: "New priority of the task (1-4). Only set this if priority is explicitly mentioned in the user's request."
             },
             dueDate: {
               type: "string",
