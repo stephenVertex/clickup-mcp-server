@@ -11,7 +11,7 @@
     "build",
     "README.md",
     "LICENSE",
-    "Dockerfile.smithery",
+    "Dockerfile",
     "smithery.yaml"
   ],
   "scripts": {

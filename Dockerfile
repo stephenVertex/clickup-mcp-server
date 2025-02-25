@@ -31,9 +31,9 @@ COPY --from=builder /app/node_modules ./node_modules
 # Copy the entrypoint script if necessary
 COPY --from=builder /app/package.json ./
 
-# Set environment variables
-ENV CLICKUP_API_KEY=your_api_key_here
-ENV CLICKUP_TEAM_ID=your_team_id_here
+# Set environment variables - don't hardcode values
+ENV CLICKUP_API_KEY=""
+ENV CLICKUP_TEAM_ID=""
 
 # Expose the desired port (if the server binds to a port)
 EXPOSE 8080
