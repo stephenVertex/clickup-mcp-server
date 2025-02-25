@@ -17,8 +17,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
-          token: ${{ secrets.PAT }}  # Use PAT instead of GITHUB_TOKEN for checkout
+          token: ${{ secrets.PAT }}
       
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -34,37 +33,44 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
       
-      - name: Bump version
+      - name: Manually Update Version
         id: version
         run: |
           # Get current version
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           echo "Current version: $CURRENT_VERSION"
           
-          # Bump version
-          npm version patch -m "Bump version to %s [skip ci]"
+          # Split version into parts
+          IFS='.' read -r -a VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR="${VERSION_PARTS[0]}"
+          MINOR="${VERSION_PARTS[1]}"
+          PATCH="${VERSION_PARTS[2]}"
           
-          # Get new version
-          NEW_VERSION=$(node -p "require('./package.json').version")
+          # Increment patch version
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
           echo "New version: $NEW_VERSION"
           
-          # Verify version was bumped
-          if [ "$CURRENT_VERSION" == "$NEW_VERSION" ]; then
-            echo "Version was not bumped correctly!"
-            exit 1
-          fi
+          # Update package.json with new version
+          npm version "$NEW_VERSION" --no-git-tag-version
           
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
       
       - name: Build
         run: npm run build
       
+      - name: Commit and Tag Version
+        run: |
+          git add package.json
+          git commit -m "Bump version to ${{ steps.version.outputs.new_version }} [skip ci]"
+          git tag -a "v${{ steps.version.outputs.new_version }}" -m "Version ${{ steps.version.outputs.new_version }}"
+      
       - name: Publish to npm
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
-      - name: Push version update
+      - name: Push changes
         run: |
           git remote set-url origin https://x-access-token:${{ secrets.PAT }}@github.com/${{ github.repository }}
           git push --follow-tags 
