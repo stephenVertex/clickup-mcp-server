@@ -1049,7 +1049,7 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
               role: "user",
               content: {
                 type: "text",
-                text: "Please analyze the priorities of the following ClickUp tasks:"
+                text: "Analyze the priorities of the following ClickUp tasks:"
               }
             },
             ...tasks.map(task => ({
