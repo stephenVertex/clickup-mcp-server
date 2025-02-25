@@ -30,7 +30,7 @@ npx -y @taazkareem/clickup-mcp-server \
   - View and modify task details and properties
 
 - 📂 **Workspace Organization**
-  - Navigate complete workspace hierarchy (spaces, folders, lists)
+  - Complete workspace hierarchy (spaces, folders, lists)
   - Tree structure with clear relationships
   - Create and manage lists and folders
   - Efficient path-based navigation
@@ -40,42 +40,39 @@ npx -y @taazkareem/clickup-mcp-server \
   - Case-insensitive name matching
   - Markdown formatting support
   - Built-in API rate limiting
-  - Comprehensive error handling
-  - Clear parameter validation
 
 - 🤖 **AI-Powered Analysis**
   - Task status summaries and overviews
   - Priority analysis and recommendations
   - Structured description generation
   - Task relationship mapping
-  - Workspace organization insights
 
 ## Available Tools
 
 | Tool | Description | Required Parameters |
 |------|-------------|-------------------|
-| [get_workspace_hierarchy](docs/tools.md#workspace-organization) | Get complete workspace structure | None |
-| [get_tasks](docs/tools.md#task-management) | Retrieve tasks from a list | `listId` or `listName` |
-| [get_task](docs/tools.md#task-management) | Get single task details | `taskId` or `taskName` |
-| [create_task](docs/tools.md#task-management) | Create a new task | `listId`, `taskName` |
-| [create_bulk_tasks](docs/tools.md#task-management) | Create multiple tasks | `listId`, `tasks[]` |
-| [update_task](docs/tools.md#task-management) | Modify task properties | `taskId` or `taskName` |
-| [delete_task](docs/tools.md#task-management) | Remove a task | `taskId` or `taskName` |
-| [move_task](docs/tools.md#task-management) | Move task to another list | `taskId`, `destinationListId` |
-| [duplicate_task](docs/tools.md#task-management) | Copy task to another list | `taskId`, `destinationListId` |
-| [create_list](docs/tools.md#list-management) | Create a new list | `spaceId`, `listName` |
-| [create_folder](docs/tools.md#folder-management) | Create a new folder | `spaceId`, `folderName` |
-| [create_list_in_folder](docs/tools.md#list-management) | Create list in folder | `folderId`, `listName` |
+| [get_workspace_hierarchy](docs/api-reference.md#workspace-navigation) | Get workspace structure | None |
+| [create_task](docs/api-reference.md#task-management) | Create a task | `name`, (`listId`/`listName`) |
+| [create_bulk_tasks](docs/api-reference.md#task-management) | Create multiple tasks | `tasks[]` |
+| [update_task](docs/api-reference.md#task-management) | Modify task | `taskId`/`taskName` |
+| [get_tasks](docs/api-reference.md#task-retrieval) | Get tasks from list | `listId`/`listName` |
+| [get_task](docs/api-reference.md#task-retrieval) | Get task details | `taskId`/`taskName` |
+| [delete_task](docs/api-reference.md#task-management) | Remove task | `taskId` |
+| [move_task](docs/api-reference.md#task-management) | Move task | `taskId`/`taskName`, `listId`/`listName` |
+| [duplicate_task](docs/api-reference.md#task-management) | Copy task | `taskId`/`taskName`, `listId`/`listName` |
+| [create_list](docs/api-reference.md#list-management) | Create list in space | `name`, `spaceId`/`spaceName` |
+| [create_folder](docs/api-reference.md#folder-management) | Create folder | `name`, `spaceId`/`spaceName` |
+| [create_list_in_folder](docs/api-reference.md#list-management) | Create list in folder | `name`, `folderId`/`folderName` |
 
-See [full documentation](docs/tools.md) for optional parameters and advanced usage.
+See [full documentation](docs/api-reference.md) for optional parameters and advanced usage.
 
 ## Available Prompts
 
 | Prompt | Purpose | Features |
 |--------|---------|----------|
-| [summarize_tasks](docs/tools.md#prompts) | Generate task overview | Status summary, relationships, current states |
-| [analyze_priorities](docs/tools.md#prompts) | Review task priorities | Priority review, adjustments, sequencing |
-| [generate_description](docs/tools.md#prompts) | Create task descriptions | Structure, objectives, dependencies |
+| [summarize_tasks](docs/api-reference.md#prompts) | Task overview | Status summary, priorities, relationships |
+| [analyze_priorities](docs/api-reference.md#prompts) | Priority optimization | Distribution analysis, sequencing |
+| [generate_description](docs/api-reference.md#prompts) | Task description creation | Objectives, criteria, dependencies |
 
 ## Error Handling
 

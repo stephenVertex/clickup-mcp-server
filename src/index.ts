@@ -3,22 +3,37 @@
 /**
  * ClickUp MCP Server - A Model Context Protocol server for ClickUp integration
  * 
- * This server enables AI applications to interact with ClickUp through a standardized protocol.
+ * This server enables AI applications to interact with ClickUp through a standardized protocol,
+ * allowing AI assistants to manage tasks, lists, and folders in ClickUp workspaces.
+ * 
  * Key capabilities include:
  * 
- * Tools:
- * - Task Management: Create, update, move and duplicate tasks
- * - Bulk task creation and management
- * - Workspace Organization: Create lists, folders and manage hierarchy
- * - Smart lookups by name or ID with case-insensitive matching
+ * Task Management:
+ * - Create, update, move and duplicate tasks with rich description support
+ * - Find tasks by name with smart disambiguation
+ * - Bulk task creation for efficient workflow setup
+ * - Comprehensive filtering and sorting options
  * 
- * Prompts:
- * - Task summarization and status grouping
- * - Priority analysis and optimization
- * - Detailed task description generation
- * - Task relationship insights
+ * Workspace Organization:
+ * - Navigate and discover workspace structure with hierarchical views
+ * - Create and manage lists and folders with proper nesting
+ * - Smart name-based lookups that eliminate the need for IDs
+ * - Support for priorities, statuses, and due dates
  * 
- * Features markdown support, secure credential handling, and comprehensive error reporting.
+ * AI-Enhanced Capabilities:
+ * - Task summarization and status grouping for project overviews
+ * - Priority analysis and optimization for workload balancing
+ * - Detailed task description generation with structured content
+ * - Task relationship identification for dependency management
+ * 
+ * Technical Features:
+ * - Full markdown support for rich text content
+ * - Secure credential handling through configuration
+ * - Comprehensive error reporting and validation
+ * - Name-based entity resolution with fuzzy matching
+ * 
+ * This implementation follows the Model Context Protocol specification and
+ * is designed to be used with AI assistants that support MCP.
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -50,7 +65,7 @@ const clickup = ClickUpService.initialize(config.clickupApiKey, config.clickupTe
 const server = new Server(
   {
     name: "clickup-mcp-server",
-    version: "0.1.0",
+    version: "0.4.50",
   },
   {
     capabilities: {
@@ -69,7 +84,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "get_workspace_hierarchy",
-        description: "Get the complete hierarchy of spaces, folders, and lists in the workspace.  Important: If looking up information, first check chat history for space, folder, and list names or ID matches.  If not found, use this tool to get necessary information.",
+        description: "Retrieve the complete ClickUp workspace hierarchy, including all spaces, folders, and lists with their IDs, names, and hierarchical paths. Call this tool only when you need to discover the workspace structure and don't already have this information from recent context. Avoid using for repeated lookups of the same information.",
         inputSchema: {
           type: "object",
           properties: {},
@@ -78,7 +93,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_task",
-        description: "Create a new task in ClickUp. Supports direct name-based lookup for lists - no need to know the list ID. Status will use ClickUp defaults if not specified.  If the specified list doesn't exist, you can create it using create_list or create_list_in_folder.",
+        description: "Create a single task in a ClickUp list. Use this tool for individual task creation only. For multiple tasks, use create_bulk_tasks instead. The tool finds lists by name (case-insensitive) so explicit list IDs aren't required. When creating a task, you must provide either a listId or listName.",
         inputSchema: {
           type: "object",
           properties: {
@@ -108,11 +123,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             priority: {
               type: "number",
-              description: "Priority of the task (1-4), 1 is urgent/highest priority, 4 is lowest priority. Only set this if priority is explicitly mentioned in the user's request."
+              description: "Priority of the task (1-4), where 1 is urgent/highest priority and 4 is lowest priority. Only set this when the user explicitly requests a priority level."
             },
             dueDate: {
               type: "string",
-              description: "Due date of the task (Unix timestamp in milliseconds)"
+              description: "Due date of the task (Unix timestamp in milliseconds). Convert dates to this format before submitting."
             }
           },
           required: ["name"]
@@ -120,7 +135,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_bulk_tasks",
-        description: "Create multiple tasks in a ClickUp list. Supports direct name-based lookup for lists - no need to know the list ID. Tasks will use ClickUp default status if not specified. If the specified list doesn't exist, you can create it using create_list or create_list_in_folder.",
+        description: "Create multiple tasks in a ClickUp list simultaneously. Use this tool when you need to add several related tasks in one operation. The tool finds lists by name (case-insensitive), so explicit list IDs aren't required. More efficient than creating tasks one by one for batch operations.",
         inputSchema: {
           type: "object",
           properties: {
@@ -134,13 +149,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             tasks: {
               type: "array",
-              description: "Array of tasks to create",
+              description: "Array of tasks to create (at least one task required)",
               items: {
                 type: "object",
                 properties: {
                   name: {
                     type: "string",
-                    description: "Name of the task"
+                    description: "Name of the task. Consider adding a relevant emoji before the name."
                   },
                   description: {
                     type: "string",
@@ -156,11 +171,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                   },
                   priority: {
                     type: "number",
-                    description: "Priority level (1-4), 1 is urgent/highest priority, 4 is lowest priority. Only set this if priority is explicitly mentioned in the user's request."
+                    description: "Priority level (1-4), where 1 is urgent/highest priority and 4 is lowest priority. Only set when explicitly requested."
                   },
                   dueDate: {
                     type: "string",
-                    description: "Due date (Unix timestamp in milliseconds)"
+                    description: "Due date (Unix timestamp in milliseconds). Convert dates to this format before submitting."
                   },
                   assignees: {
                     type: "array",
@@ -174,12 +189,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               }
             }
           },
-          required: ["listId", "tasks"]
+          required: ["tasks"]
         }
       },
       {
         name: "create_list",
-        description: "Create a new list in a ClickUp space. Supports direct name-based lookup for spaces - no need to know the space ID. If the specified space doesn't exist, you can create it through the ClickUp web interface (space creation via API not supported).",
+        description: "Create a new list directly in a ClickUp space. Use this tool when you need a top-level list not nested inside a folder. The tool can find spaces by name, so explicit space IDs aren't required. For creating lists inside folders, use create_list_in_folder instead.",
         inputSchema: {
           type: "object",
           properties: {
@@ -201,11 +216,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             dueDate: {
               type: "string",
-              description: "Due date for the list (ISO string)"
+              description: "Due date for the list (Unix timestamp in milliseconds). Convert dates to this format before submitting."
             },
             priority: {
               type: "number",
-              description: "Priority of the list (1-4). Only set this if priority is explicitly mentioned in the user's request."
+              description: "Priority of the list (1-4), where 1 is urgent/highest priority and 4 is lowest priority. Only set when explicitly requested."
             },
             assignee: {
               type: "number",
@@ -221,7 +236,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_folder",
-        description: "Create a new folder in a ClickUp space. Supports direct name-based lookup for spaces - no need to know the space ID. If the specified space doesn't exist, you can create it through the ClickUp web interface (space creation via API not supported).",
+        description: "Create a new folder in a ClickUp space for organizing related lists. Use this tool when you need to group multiple lists together. The tool can find spaces by name, so explicit space IDs aren't required. After creating a folder, you can add lists to it using create_list_in_folder.",
         inputSchema: {
           type: "object",
           properties: {
@@ -239,7 +254,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             override_statuses: {
               type: "boolean",
-              description: "Whether to override space statuses"
+              description: "Whether to override space statuses with folder-specific statuses"
             }
           },
           required: ["name"]
@@ -247,7 +262,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_list_in_folder",
-        description: "Create a new list in a ClickUp folder. Supports direct name-based lookup for folders and spaces - no need to know IDs. If the specified folder doesn't exist, you can create it using create_folder. If the space doesn't exist, it must be created through the ClickUp web interface.",
+        description: "Create a new list within a ClickUp folder. Use this tool when you need to add a list to an existing folder structure. The tool can find folders and spaces by name, so explicit IDs aren't required. For top-level lists not in folders, use create_list instead.",
         inputSchema: {
           type: "object",
           properties: {
@@ -277,7 +292,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             status: {
               type: "string",
-              description: "Status of the list"
+              description: "Status of the list (uses folder default if not specified)"
             }
           },
           required: ["name"]
@@ -285,7 +300,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "move_task",
-        description: "Move a task to a different list. Supports direct name-based lookup for lists and tasks - no need to know IDs.",
+        description: "Move an existing task from its current list to a different list. Use this tool when you need to relocate a task within your workspace hierarchy. The tool can find tasks and lists by name, so explicit IDs aren't required. Task statuses may be reset if the destination list uses different status options.",
         inputSchema: {
           type: "object",
           properties: {
@@ -299,7 +314,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             sourceListName: {
               type: "string",
-              description: "Optional: Name of the list to narrow down task search"
+              description: "Optional: Name of the source list to narrow down task search when multiple tasks have the same name"
             },
             listId: {
               type: "string",
@@ -315,7 +330,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "duplicate_task",
-        description: "Duplicate a task to a list. Supports direct name-based lookup for lists - no need to know the list ID. If the destination list doesn't exist, you can create it using create_list or create_list_in_folder.",
+        description: "Create a copy of an existing task in the same or different list. Use this tool when you need to replicate a task's content and properties. The tool can find tasks and lists by name, so explicit IDs aren't required. The duplicate will preserve name, description, priority, and other attributes from the original task.",
         inputSchema: {
           type: "object",
           properties: {
@@ -329,7 +344,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             sourceListName: {
               type: "string",
-              description: "Optional: Name of the list to narrow down task search"
+              description: "Optional: Name of the source list to narrow down task search when multiple tasks have the same name"
             },
             listId: {
               type: "string",
@@ -345,7 +360,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "update_task",
-        description: "Update an existing task in ClickUp. Supports direct name-based lookup for tasks - no need to know the task ID.",
+        description: "Modify the properties of an existing task. Use this tool when you need to change a task's name, description, status, priority, or due date. The tool can find tasks by name, so explicit task IDs aren't required. Only the fields you specify will be updated; other fields will remain unchanged.",
         inputSchema: {
           type: "object",
           properties: {
@@ -359,27 +374,27 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             listName: {
               type: "string",
-              description: "Optional: Name of the list to narrow down task search"
+              description: "Optional: Name of the list to narrow down task search when multiple tasks have the same name"
             },
             name: {
               type: "string",
-              description: "New name of the task"
+              description: "New name for the task"
             },
             description: {
               type: "string",
-              description: "New description of the task"
+              description: "New plain text description for the task"
             },
             status: {
               type: "string",
-              description: "New status of the task"
+              description: "New status for the task (must be a valid status in the task's list)"
             },
             priority: {
               type: "number",
-              description: "New priority of the task (1-4). Only set this if priority is explicitly mentioned in the user's request."
+              description: "New priority for the task (1-4), where 1 is urgent/highest priority and 4 is lowest priority"
             },
             dueDate: {
               type: "string",
-              description: "New due date of the task (ISO string)"
+              description: "New due date for the task (Unix timestamp in milliseconds). Convert dates to this format before submitting."
             }
           },
           required: []
@@ -387,7 +402,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "get_tasks",
-        description: "Get tasks from a ClickUp list with optional filters. Supports direct name-based lookup for lists - no need to know the list ID. If the list doesn't exist, you can create it using create_list or create_list_in_folder. ",
+        description: "Retrieve tasks from a ClickUp list with optional filtering capabilities. Use this tool when you need to see existing tasks or analyze your current workload. The tool can find lists by name, eliminating the need for explicit list IDs. Results can be filtered by status, assignees, dates, and more.",
         inputSchema: {
           type: "object",
           properties: {
@@ -401,65 +416,65 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             archived: {
               type: "boolean",
-              description: "Include archived tasks"
+              description: "Set to true to include archived tasks in the results"
             },
             page: {
               type: "number",
-              description: "Page number for pagination"
+              description: "Page number for pagination when dealing with many tasks (starts at 0)"
             },
             order_by: {
               type: "string",
-              description: "Field to order tasks by"
+              description: "Field to order tasks by (e.g., 'due_date', 'created', 'updated')"
             },
             reverse: {
               type: "boolean",
-              description: "Reverse the order of tasks"
+              description: "Set to true to reverse the sort order (descending instead of ascending)"
             },
             subtasks: {
               type: "boolean",
-              description: "Include subtasks"
+              description: "Set to true to include subtasks in the results"
             },
             statuses: {
               type: "array",
               items: { type: "string" },
-              description: "Filter tasks by status"
+              description: "Array of status names to filter tasks by (e.g., ['To Do', 'In Progress'])"
             },
             include_closed: {
               type: "boolean",
-              description: "Include closed tasks"
+              description: "Set to true to include tasks with 'Closed' status"
             },
             assignees: {
               type: "array",
               items: { type: "string" },
-              description: "Filter tasks by assignee IDs"
+              description: "Array of user IDs to filter tasks by assignee"
             },
             due_date_gt: {
               type: "number",
-              description: "Filter tasks due after this timestamp"
+              description: "Filter tasks due after this timestamp (Unix milliseconds)"
             },
             due_date_lt: {
               type: "number",
-              description: "Filter tasks due before this timestamp"
+              description: "Filter tasks due before this timestamp (Unix milliseconds)"
             },
             date_created_gt: {
               type: "number",
-              description: "Filter tasks created after this timestamp"
+              description: "Filter tasks created after this timestamp (Unix milliseconds)"
             },
             date_created_lt: {
               type: "number",
-              description: "Filter tasks created before this timestamp"
+              description: "Filter tasks created before this timestamp (Unix milliseconds)"
             },
             date_updated_gt: {
               type: "number",
-              description: "Filter tasks updated after this timestamp"
+              description: "Filter tasks updated after this timestamp (Unix milliseconds)"
             },
             date_updated_lt: {
               type: "number",
-              description: "Filter tasks updated before this timestamp"
+              description: "Filter tasks updated before this timestamp (Unix milliseconds)"
             },
             custom_fields: {
               type: "object",
-              description: "Filter tasks by custom field values"
+              description: "Object with custom field IDs as keys and desired values for filtering"
             }
           },
           required: []
@@ -467,7 +482,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "get_task",
-        description: "Get detailed information about a specific ClickUp task, including attachments. Supports direct name-based lookup for tasks.",
+        description: "Retrieve comprehensive details about a specific ClickUp task. Use this tool when you need in-depth information about a particular task, including its description, custom fields, attachments, and other metadata. The tool can find tasks by name, eliminating the need for explicit task IDs.",
         inputSchema: {
           type: "object",
           properties: {
@@ -481,7 +496,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             listName: {
               type: "string",
-              description: "Optional: Name of the list to narrow down task search"
+              description: "Optional: Name of the list to narrow down task search when multiple tasks have the same name"
             }
           },
           required: []
@@ -489,13 +504,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "delete_task",
-        description: "Delete a task from your workspace. This action cannot be undone.",
+        description: "Permanently remove a task from your ClickUp workspace. Use this tool with caution as deletion cannot be undone. The tool requires an explicit task ID for safety reasons, which you can obtain by first using get_task or get_tasks to find the appropriate task ID.",
         inputSchema: {
           type: "object",
           properties: {
             taskId: {
               type: "string",
-              description: "ID of the task to delete"
+              description: "ID of the task to delete - this is required for safety to prevent accidental deletions"
+            },
+            taskName: {
+              type: "string",
+              description: "Name of the task to delete - will automatically find the task by name (optional if using taskId instead)"
+            },
+            listName: {
+              type: "string",
+              description: "Optional: Name of the list to narrow down task search when multiple tasks have the same name"
             }
           },
           required: ["taskId"]
@@ -853,6 +876,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           custom_fields?: Record<string, any>;
         };
 
+        // Enforce required listName field as specified in the schema
         if (!args.listId && !args.listName) {
           throw new Error("Either listId or listName is required");
         }
@@ -885,6 +909,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           listName?: string;
         };
 
+        // Enforce required taskName field as specified in the schema
         if (!args.taskId && !args.taskName) {
           throw new Error("Either taskId or taskName is required");
         }
@@ -911,31 +936,32 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case "delete_task": {
         const args = request.params.arguments as { 
-          taskId?: string;
+          taskId: string; // Make taskId required
           taskName?: string;
           listName?: string;
         };
 
-        if (!args.taskId && !args.taskName) {
-          throw new Error("Either taskId or taskName is required");
+        // Validate the required taskId parameter
+        if (!args.taskId) {
+          throw new Error("taskId is required for deletion operations");
         }
 
-        let taskId = args.taskId;
-        if (!taskId && args.taskName) {
-          const result = await clickup.findTaskByName(args.taskName, undefined, args.listName);
-          if (!result) {
-            throw new Error(`Task with name "${args.taskName}" not found${
-              args.listName ? ` in list "${args.listName}"` : ''
-            }`);
+        // Store the task name before deletion for the response message
+        let taskName = args.taskName;
+        if (!taskName) {
+          try {
+            const task = await clickup.getTask(args.taskId);
+            taskName = task.name;
+          } catch (error) {
+            // If we can't get the task details, just use the ID in the response
           }
-          taskId = result.id;
         }
 
-        await clickup.deleteTask(taskId!);
+        await clickup.deleteTask(args.taskId);
         return {
           content: [{
             type: "text",
-            text: `Successfully deleted task ${args.taskName || taskId}`
+            text: `Successfully deleted task ${taskName || args.taskId}`
           }]
         };
       }
@@ -963,15 +989,15 @@ server.setRequestHandler(ListPromptsRequestSchema, async () => {
     prompts: [
       {
         name: "summarize_tasks",
-        description: "Summarize all tasks in a list",
+        description: "Generate a comprehensive summary of tasks in a ClickUp list or workspace. The summary includes a high-level overview, groups tasks by status, highlights priority items, and identifies potential task relationships or dependencies. Useful for project status reports and team updates.",
       },
       {
         name: "analyze_priorities",
-        description: "Analyze task priorities and suggest optimizations",
+        description: "Evaluate task priority distribution across your workspace and identify optimization opportunities. The analysis examines current priority assignments, identifies misaligned priorities, suggests adjustments, and recommends task sequencing based on priorities. Helpful for workload management and project planning.",
       },
       {
         name: "generate_description",
-        description: "Generate a detailed description for a task",
+        description: "Create a detailed, well-structured task description with clearly defined objectives, success criteria, required resources, dependencies, and risk assessments. This prompt helps ensure tasks are comprehensively documented with all necessary information for successful execution.",
       }
     ]
   };

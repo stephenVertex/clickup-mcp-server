@@ -15,14 +15,14 @@ This document provides detailed information about all available tools, their par
 
 | Tool | Description | Required Parameters | Optional Parameters |
 |------|-------------|-------------------|-------------------|
-| [get_tasks](tasks.md) | Retrieve tasks from a list | `listId` or `listName` | archived, page, order_by, reverse, subtasks, statuses, include_closed, assignees, due_date_gt/lt |
-| [get_task](tasks.md) | Get single task details | `taskId` or `taskName` | `listName` |
-| [create_task](tasks.md) | Create a new task | `listId`, `taskName` | description, status, priority (1-4), dueDate |
-| [create_bulk_tasks](tasks.md) | Create multiple tasks | `listId`, `tasks[]` | (per task: description, status, priority, dueDate) |
-| [update_task](tasks.md) | Modify task properties | `taskId` or `taskName` | name, description, status, priority, dueDate |
-| [delete_task](tasks.md) | Remove a task | `taskId` or `taskName` | `listName` |
-| [move_task](tasks.md) | Move task to another list | `taskId`, `destinationListId` | `sourceListName` |
-| [duplicate_task](tasks.md) | Copy task to another list | `taskId`, `destinationListId` | `sourceListName` |
+| get_tasks | Retrieve tasks from a list | Either `listId` or `listName` | archived, page, order_by, reverse, subtasks, statuses, include_closed, assignees, due_date_gt/lt |
+| get_task | Get single task details | Either `taskId` or `taskName` | `listName` |
+| create_task | Create a new task | `name` and either `listId` or `listName` | description, status, priority (1-4), dueDate |
+| create_bulk_tasks | Create multiple tasks | `tasks[]` | `listId` or `listName` |
+| update_task | Modify task properties | Either `taskId` or `taskName` | name, description, status, priority, dueDate |
+| delete_task | Remove a task | `taskId` | `taskName`, `listName` |
+| move_task | Move task to another list | Either `taskId` or `taskName`, and either `listId` or `listName` | `sourceListName` |
+| duplicate_task | Copy task to another list | Either `taskId` or `taskName`, and either `listId` or `listName` | `sourceListName` |
 
 ### Task Parameters
 
@@ -118,8 +118,8 @@ Create these tasks in the "Sprint Backlog" list:
 
 | Tool | Description | Required Parameters | Optional Parameters |
 |------|-------------|-------------------|-------------------|
-| [create_list](lists.md) | Create a new list | `spaceId`, `listName` | content, dueDate, priority, assignee |
-| [create_list_in_folder](lists.md) | Create list in folder | `folderId`, `listName` | content, status |
+| create_list | Create a new list | `name` and either `spaceId` or `spaceName` | content, dueDate, priority, assignee |
+| create_list_in_folder | Create list in folder | `name` and either `folderId` or `folderName` | content, status |
 
 ### List Parameters
 
@@ -131,13 +131,13 @@ Create these tasks in the "Sprint Backlog" list:
 
 | Tool | Description | Required Parameters | Optional Parameters |
 |------|-------------|-------------------|-------------------|
-| [create_folder](folders.md) | Create a new folder | `spaceId`, `folderName` | override_statuses |
+| create_folder | Create a new folder | `name` and either `spaceId` or `spaceName` | override_statuses |
 
 ## Workspace Organization
 
 | Tool | Description | Required Parameters | Response |
 |------|-------------|-------------------|----------|
-| [get_workspace_hierarchy](workspace.md) | Get complete structure | None | Full workspace tree with spaces, folders, and lists |
+| get_workspace_hierarchy | Get complete structure | None | Full workspace tree with spaces, folders, and lists |
 
 ### Workspace Tree Structure
 ```json
@@ -163,9 +163,9 @@ Create these tasks in the "Sprint Backlog" list:
 
 | Prompt | Purpose | Features |
 |--------|---------|----------|
-| [summarize_tasks](prompts.md) | Generate task overview | Status summary, relationships, current states |
-| [analyze_priorities](prompts.md) | Review task priorities | Priority review, adjustments, sequencing |
-| [generate_description](prompts.md) | Create task descriptions | Structure, objectives, dependencies |
+| summarize_tasks | Generate task overview | Status summary, relationships, current states |
+| analyze_priorities | Review task priorities | Priority review, adjustments, sequencing |
+| generate_description | Create task descriptions | Structure, objectives, dependencies |
 
 ## Common Parameters
 
