@@ -4,6 +4,7 @@
 - [x] Fix Dockerfile structure
   - Move source file copying before npm install
   - Eliminate hardcoded environment variables
+  - Completely remove environment variables from Dockerfile
 - [x] Fix smithery.yaml configuration
   - Update dockerfile reference to use main Dockerfile
   - Ensure start command and environment variables are correct
@@ -23,6 +24,7 @@
 
 ## 3. Environment Variable Handling
 - [x] Remove hardcoded values in Dockerfile
+- [x] Completely remove environment variables from Dockerfile
 - [ ] Implement proper environment variable validation
 - [ ] Add default values where appropriate
 - [ ] Document all required environment variables
