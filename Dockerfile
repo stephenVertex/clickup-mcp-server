@@ -8,12 +8,12 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json ./
 
-# Install dependencies
-RUN npm install
-
-# Copy the source files
+# Copy the source files and tsconfig BEFORE npm install
 COPY src ./src
 COPY tsconfig.json ./
+
+# Install dependencies
+RUN npm install
 
 # Compile TypeScript to JavaScript
 RUN npm run build

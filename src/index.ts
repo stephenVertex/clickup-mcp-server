@@ -189,7 +189,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               }
             }
           },
-          required: ["tasks"]
+          required: ["listId", "tasks"]
         }
       },
       {
@@ -325,7 +325,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Name of the destination list - will automatically find the list by name (optional if using listId instead)"
             }
           },
-          required: []
+          required: ["taskName", "listName"]
         }
       },
       {
@@ -355,7 +355,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Name of the list to create the duplicate in - will automatically find the list by name (optional if using listId instead)"
             }
           },
-          required: []
+          required: ["taskName", "listName"]
         }
       },
       {
@@ -397,7 +397,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "New due date for the task (Unix timestamp in milliseconds). Convert dates to this format before submitting."
             }
           },
-          required: []
+          required: ["taskName"]
         }
       },
       {
@@ -477,7 +477,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Object with custom field IDs as keys and desired values for filtering"
             }
           },
-          required: []
+          required: ["listName"]
         }
       },
       {
@@ -499,7 +499,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Optional: Name of the list to narrow down task search when multiple tasks have the same name"
             }
           },
-          required: []
+          required: ["taskName"]
         }
       },
       {
