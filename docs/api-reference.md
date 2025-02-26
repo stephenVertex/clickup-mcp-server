@@ -34,7 +34,7 @@ This document provides detailed information about all available tools, their par
 ### Examples
 
 #### Creating a Task
-**User Request:**
+**User Prompt:**
 ```
 Create a new task in the "Development Tasks" list called "Implement Authentication". 
 It should be high priority and due on January 1st, 2024. 
@@ -56,7 +56,7 @@ Add these requirements:
 ```
 
 #### Moving a Task
-**User Request:**
+**User Prompt:**
 ```
 Move the "Bug Fix" task from the "Sprint Backlog" list to "Current Sprint" list
 ```
@@ -71,7 +71,7 @@ Move the "Bug Fix" task from the "Sprint Backlog" list to "Current Sprint" list
 ```
 
 #### Updating Task Status
-**User Request:**
+**User Prompt:**
 ```
 Update the "Bug Fix" task status to "Done"
 ```
@@ -85,7 +85,7 @@ Update the "Bug Fix" task status to "Done"
 ```
 
 #### Bulk Creating Tasks
-**User Request:**
+**User Prompt:**
 ```
 Create these tasks in the "Sprint Backlog" list:
 1. Set up CI/CD pipeline (high priority)
@@ -120,6 +120,9 @@ Create these tasks in the "Sprint Backlog" list:
 |------|-------------|-------------------|-------------------|
 | create_list | Create a new list | `name` and either `spaceId` or `spaceName` | content, dueDate, priority, assignee |
 | create_list_in_folder | Create list in folder | `name` and either `folderId` or `folderName` | content, status |
+| get_list | Get list details | Either `listId` or `listName` | None |
+| update_list | Update list properties | Either `listId` or `listName` | name, content, status |
+| delete_list | Delete a list | Either `listId` or `listName` | None |
 
 ### List Parameters
 
@@ -127,11 +130,77 @@ Create these tasks in the "Sprint Backlog" list:
 - **Priority**: Same scale as tasks (1-4)
 - **Status**: Initial status for the list
 
+### Examples
+
+#### Getting List Details
+**User Prompt:**
+```
+Get details for the "Sprint Backlog" list
+```
+
+**System Response:**
+```json
+{
+  "listName": "Sprint Backlog"
+}
+```
+
+#### Updating a List
+**User Prompt:**
+```
+Update the "Sprint Backlog" list to have the description "Current sprint planning items and priorities"
+```
+
+**System Response:**
+```json
+{
+  "listName": "Sprint Backlog",
+  "content": "Current sprint planning items and priorities"
+}
+```
+
 ## Folder Management
 
 | Tool | Description | Required Parameters | Optional Parameters |
 |------|-------------|-------------------|-------------------|
 | create_folder | Create a new folder | `name` and either `spaceId` or `spaceName` | override_statuses |
+| get_folder | Get folder details | Either `folderId` or `folderName` | `spaceId` or `spaceName` (if using `folderName`) |
+| update_folder | Update folder properties | Either `folderId` or `folderName` | name, override_statuses, `spaceId` or `spaceName` (if using `folderName`) |
+| delete_folder | Delete a folder | Either `folderId` or `folderName` | `spaceId` or `spaceName` (if using `folderName`) |
+
+### Folder Parameters
+
+- **override_statuses**: Boolean to determine if folder should use custom statuses
+- **name**: Display name for the folder
+
+### Examples
+
+#### Getting Folder Details
+**User Prompt:**
+```
+Get details for the "Development Projects" folder
+```
+
+**System Response:**
+```json
+{
+  "folderName": "Development Projects"
+}
+```
+
+#### Updating a Folder
+**User Prompt:**
+```
+Update the "Development Projects" folder to be named "Active Development Projects"
+```
+
+**System Response:**
+```json
+{
+  "folderName": "Development Projects",
+  "name": "Active Development Projects"
+}
+```
 
 ## Workspace Organization
 

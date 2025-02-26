@@ -93,17 +93,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_task",
-        description: "Create a single task in a ClickUp list. Use this tool for individual task creation only. For multiple tasks, use create_bulk_tasks instead. The tool finds lists by name (case-insensitive) so explicit list IDs aren't required. When creating a task, you must provide either a listId or listName.",
+        description: "Create a single task in a ClickUp list. Use this tool for individual task creation only. For multiple tasks, use create_bulk_tasks instead. Before calling this tool, check if you already have the necessary list ID from previous responses in the conversation history, as this avoids redundant lookups. When creating a task, you must provide either a listId or listName.",
         inputSchema: {
           type: "object",
           properties: {
             listId: {
               type: "string",
-              description: "ID of the list to create the task in (optional if using listName instead)"
+              description: "ID of the list to create the task in (optional if using listName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
             },
             listName: {
               type: "string",
-              description: "Name of the list to create the task in - will automatically find the list by name (optional if using listId instead)"
+              description: "Name of the list to create the task in - will automatically find the list by name (optional if using listId instead). Only use this if you don't already have the list ID from previous responses."
             },
             name: {
               type: "string",
@@ -135,17 +135,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_bulk_tasks",
-        description: "Create multiple tasks in a ClickUp list simultaneously. Use this tool when you need to add several related tasks in one operation. The tool finds lists by name (case-insensitive), so explicit list IDs aren't required. More efficient than creating tasks one by one for batch operations.",
+        description: "Create multiple tasks in a ClickUp list simultaneously. Use this tool when you need to add several related tasks in one operation. Before calling, check if you already have the necessary list ID from previous responses in the conversation, as this avoids redundant lookups. More efficient than creating tasks one by one for batch operations.",
         inputSchema: {
           type: "object",
           properties: {
             listId: {
               type: "string",
-              description: "ID of the list to create the tasks in (optional if using listName instead)"
+              description: "ID of the list to create the tasks in (optional if using listName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
             },
             listName: {
               type: "string",
-              description: "Name of the list to create the tasks in - will automatically find the list by name (optional if using listId instead)"
+              description: "Name of the list to create the tasks in - will automatically find the list by name (optional if using listId instead). Only use this if you don't already have the list ID from previous responses."
             },
             tasks: {
               type: "array",
@@ -194,17 +194,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_list",
-        description: "Create a new list directly in a ClickUp space. Use this tool when you need a top-level list not nested inside a folder. The tool can find spaces by name, so explicit space IDs aren't required. For creating lists inside folders, use create_list_in_folder instead.",
+        description: "Create a new list directly in a ClickUp space. Use this tool when you need a top-level list not nested inside a folder. Before calling, check if you already have the necessary space ID from previous responses in the conversation, as this avoids redundant lookups. For creating lists inside folders, use create_list_in_folder instead.",
         inputSchema: {
           type: "object",
           properties: {
             spaceId: {
               type: "string",
-              description: "ID of the space to create the list in (optional if using spaceName instead)"
+              description: "ID of the space to create the list in (optional if using spaceName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
             },
             spaceName: {
               type: "string",
-              description: "Name of the space to create the list in - will automatically find the space by name (optional if using spaceId instead)"
+              description: "Name of the space to create the list in - will automatically find the space by name (optional if using spaceId instead). Only use this if you don't already have the space ID from previous responses."
             },
             name: {
               type: "string",
@@ -236,17 +236,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_folder",
-        description: "Create a new folder in a ClickUp space for organizing related lists. Use this tool when you need to group multiple lists together. The tool can find spaces by name, so explicit space IDs aren't required. After creating a folder, you can add lists to it using create_list_in_folder.",
+        description: "Create a new folder in a ClickUp space for organizing related lists. Use this tool when you need to group multiple lists together. Before calling, check if you already have the necessary space ID from previous responses in the conversation, as this avoids redundant lookups. After creating a folder, you can add lists to it using create_list_in_folder.",
         inputSchema: {
           type: "object",
           properties: {
             spaceId: {
               type: "string",
-              description: "ID of the space to create the folder in (optional if using spaceName instead)"
+              description: "ID of the space to create the folder in (optional if using spaceName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
             },
             spaceName: {
               type: "string",
-              description: "Name of the space to create the folder in - will automatically find the space by name (optional if using spaceId instead)"
+              description: "Name of the space to create the folder in - will automatically find the space by name (optional if using spaceId instead). Only use this if you don't already have the space ID from previous responses."
             },
             name: {
               type: "string",
@@ -262,25 +262,25 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "create_list_in_folder",
-        description: "Create a new list within a ClickUp folder. Use this tool when you need to add a list to an existing folder structure. The tool can find folders and spaces by name, so explicit IDs aren't required. For top-level lists not in folders, use create_list instead.",
+        description: "Create a new list within a ClickUp folder. Use this tool when you need to add a list to an existing folder structure. Before calling, check if you already have the necessary folder ID and space ID from previous responses in the conversation, as this avoids redundant lookups. For top-level lists not in folders, use create_list instead.",
         inputSchema: {
           type: "object",
           properties: {
             folderId: {
               type: "string",
-              description: "ID of the folder to create the list in (optional if using folderName instead)"
+              description: "ID of the folder to create the list in (optional if using folderName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
             },
             folderName: {
               type: "string",
-              description: "Name of the folder to create the list in - will automatically find the folder by name (optional if using folderId instead)"
+              description: "Name of the folder to create the list in - will automatically find the folder by name (optional if using folderId instead). Only use this if you don't already have the folder ID from previous responses."
             },
             spaceId: {
               type: "string",
-              description: "ID of the space containing the folder (optional if using spaceName instead)"
+              description: "ID of the space containing the folder (optional if using spaceName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
             },
             spaceName: {
               type: "string",
-              description: "Name of the space containing the folder - will automatically find the space by name (optional if using spaceId instead)"
+              description: "Name of the space containing the folder - will automatically find the space by name (optional if using spaceId instead). Only use this if you don't already have the space ID from previous responses."
             },
             name: {
               type: "string",
@@ -300,17 +300,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "move_task",
-        description: "Move an existing task from its current list to a different list. Use this tool when you need to relocate a task within your workspace hierarchy. The tool can find tasks and lists by name, so explicit IDs aren't required. Task statuses may be reset if the destination list uses different status options.",
+        description: "Move an existing task from its current list to a different list. Use this tool when you need to relocate a task within your workspace hierarchy. Before calling, check if you already have the necessary task ID and list ID from previous responses in the conversation, as this avoids redundant lookups. Task statuses may be reset if the destination list uses different status options.",
         inputSchema: {
           type: "object",
           properties: {
             taskId: {
               type: "string",
-              description: "ID of the task to move (optional if using taskName instead)"
+              description: "ID of the task to move (optional if using taskName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
             },
             taskName: {
               type: "string",
-              description: "Name of the task to move - will automatically find the task by name (optional if using taskId instead)"
+              description: "Name of the task to move - will automatically find the task by name (optional if using taskId instead). Only use this if you don't already have the task ID from previous responses."
             },
             sourceListName: {
               type: "string",
@@ -318,11 +318,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             listId: {
               type: "string",
-              description: "ID of the destination list (optional if using listName instead)"
+              description: "ID of the destination list (optional if using listName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
             },
             listName: {
               type: "string",
-              description: "Name of the destination list - will automatically find the list by name (optional if using listId instead)"
+              description: "Name of the destination list - will automatically find the list by name (optional if using listId instead). Only use this if you don't already have the list ID from previous responses."
             }
           },
           required: ["taskName", "listName"]
@@ -330,17 +330,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "duplicate_task",
-        description: "Create a copy of an existing task in the same or different list. Use this tool when you need to replicate a task's content and properties. The tool can find tasks and lists by name, so explicit IDs aren't required. The duplicate will preserve name, description, priority, and other attributes from the original task.",
+        description: "Create a copy of an existing task in the same or different list. Use this tool when you need to replicate a task's content and properties. Before calling, check if you already have the necessary task ID and list ID from previous responses in the conversation, as this avoids redundant lookups. The duplicate will preserve name, description, priority, and other attributes from the original task.",
         inputSchema: {
           type: "object",
           properties: {
             taskId: {
               type: "string",
-              description: "ID of the task to duplicate (optional if using taskName instead)"
+              description: "ID of the task to duplicate (optional if using taskName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
             },
             taskName: {
               type: "string",
-              description: "Name of the task to duplicate - will automatically find the task by name (optional if using taskId instead)"
+              description: "Name of the task to duplicate - will automatically find the task by name (optional if using taskId instead). Only use this if you don't already have the task ID from previous responses."
             },
             sourceListName: {
               type: "string",
@@ -348,11 +348,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             listId: {
               type: "string",
-              description: "ID of the list to create the duplicate in (optional if using listName instead)"
+              description: "ID of the list to create the duplicate in (optional if using listName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
             },
             listName: {
               type: "string",
-              description: "Name of the list to create the duplicate in - will automatically find the list by name (optional if using listId instead)"
+              description: "Name of the list to create the duplicate in - will automatically find the list by name (optional if using listId instead). Only use this if you don't already have the list ID from previous responses."
             }
           },
           required: ["taskName", "listName"]
@@ -360,17 +360,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "update_task",
-        description: "Modify the properties of an existing task. Use this tool when you need to change a task's name, description, status, priority, or due date. The tool can find tasks by name, so explicit task IDs aren't required. Only the fields you specify will be updated; other fields will remain unchanged.",
+        description: "Modify the properties of an existing task. Use this tool when you need to change a task's name, description, status, priority, or due date. Before calling, check if you already have the necessary task ID from previous responses in the conversation, as this avoids redundant lookups. Only the fields you specify will be updated; other fields will remain unchanged.",
         inputSchema: {
           type: "object",
           properties: {
             taskId: {
               type: "string",
-              description: "ID of the task to update (optional if using taskName instead)"
+              description: "ID of the task to update (optional if using taskName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
             },
             taskName: {
               type: "string",
-              description: "Name of the task to update - will automatically find the task by name (optional if using taskId instead)"
+              description: "Name of the task to update - will automatically find the task by name (optional if using taskId instead). Only use this if you don't already have the task ID from previous responses."
             },
             listName: {
               type: "string",
@@ -402,17 +402,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "get_tasks",
-        description: "Retrieve tasks from a ClickUp list with optional filtering capabilities. Use this tool when you need to see existing tasks or analyze your current workload. The tool can find lists by name, eliminating the need for explicit list IDs. Results can be filtered by status, assignees, dates, and more.",
+        description: "Retrieve tasks from a ClickUp list with optional filtering capabilities. Use this tool when you need to see existing tasks or analyze your current workload. Before calling, check if you already have the necessary list ID from previous responses in the conversation, as this avoids redundant lookups. Results can be filtered by status, assignees, dates, and more.",
         inputSchema: {
           type: "object",
           properties: {
             listId: {
               type: "string",
-              description: "ID of the list to get tasks from (optional if using listName instead)"
+              description: "ID of the list to get tasks from (optional if using listName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
             },
             listName: {
               type: "string",
-              description: "Name of the list to get tasks from - will automatically find the list by name (optional if using listId instead)"
+              description: "Name of the list to get tasks from - will automatically find the list by name (optional if using listId instead). Only use this if you don't already have the list ID from previous responses."
             },
             archived: {
               type: "boolean",
@@ -482,17 +482,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "get_task",
-        description: "Retrieve comprehensive details about a specific ClickUp task. Use this tool when you need in-depth information about a particular task, including its description, custom fields, attachments, and other metadata. The tool can find tasks by name, eliminating the need for explicit task IDs.",
+        description: "Retrieve comprehensive details about a specific ClickUp task. Use this tool when you need in-depth information about a particular task, including its description, custom fields, attachments, and other metadata. Before calling, check if you already have the necessary task ID from previous responses in the conversation, as this avoids redundant lookups.",
         inputSchema: {
           type: "object",
           properties: {
             taskId: {
               type: "string",
-              description: "ID of the task to retrieve (optional if using taskName instead)"
+              description: "ID of the task to retrieve (optional if using taskName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
             },
             taskName: {
               type: "string",
-              description: "Name of the task to retrieve - will automatically find the task by name (optional if using taskId instead)"
+              description: "Name of the task to retrieve - will automatically find the task by name (optional if using taskId instead). Only use this if you don't already have the task ID from previous responses."
             },
             listName: {
               type: "string",
@@ -504,17 +504,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "delete_task",
-        description: "Permanently remove a task from your ClickUp workspace. Use this tool with caution as deletion cannot be undone. The tool requires an explicit task ID for safety reasons, which you can obtain by first using get_task or get_tasks to find the appropriate task ID.",
+        description: "Permanently remove a task from your ClickUp workspace. Use this tool with caution as deletion cannot be undone. Before calling, check if you already have the necessary task ID from previous responses in the conversation, as this avoids redundant lookups. For safety, the task ID is required.",
         inputSchema: {
           type: "object",
           properties: {
             taskId: {
               type: "string",
-              description: "ID of the task to delete - this is required for safety to prevent accidental deletions"
+              description: "ID of the task to delete - this is required for safety to prevent accidental deletions. If you have this ID from a previous response, use it directly."
             },
             taskName: {
               type: "string",
-              description: "Name of the task to delete - will automatically find the task by name (optional if using taskId instead)"
+              description: "Name of the task to delete - will automatically find the task by name (optional if using taskId instead). Only use this if you don't already have the task ID from previous responses."
             },
             listName: {
               type: "string",
@@ -522,6 +522,158 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             }
           },
           required: ["taskId"]
+        }
+      },
+      {
+        name: "get_folder",
+        description: "Retrieve details about a specific ClickUp folder including its name, status, and other metadata. Before calling, check if you already have the necessary folder ID from previous responses in the conversation history, as this avoids redundant lookups. Helps you understand folder structure before creating or updating lists.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            folderId: {
+              type: "string",
+              description: "ID of the folder to retrieve (optional if using folderName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
+            },
+            folderName: {
+              type: "string",
+              description: "Name of the folder to retrieve - will automatically find the folder by name (optional if using folderId instead). Only use this if you don't already have the folder ID from previous responses."
+            },
+            spaceId: {
+              type: "string",
+              description: "ID of the space containing the folder (optional if using spaceName instead, and only needed when using folderName). If you have this ID from a previous response, use it directly rather than looking up by name."
+            },
+            spaceName: {
+              type: "string",
+              description: "Name of the space containing the folder (optional if using spaceId instead, and only needed when using folderName). Only use this if you don't already have the space ID from previous responses."
+            }
+          },
+          required: []
+        }
+      },
+      {
+        name: "update_folder",
+        description: "Modify an existing ClickUp folder's properties, such as name or status settings. Before calling, check if you already have the necessary folder ID from previous responses in the conversation history, as this avoids redundant lookups. Use when reorganizing or renaming workspace elements.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            folderId: {
+              type: "string",
+              description: "ID of the folder to update (optional if using folderName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
+            },
+            folderName: {
+              type: "string",
+              description: "Name of the folder to update - will automatically find the folder by name (optional if using folderId instead). Only use this if you don't already have the folder ID from previous responses."
+            },
+            spaceId: {
+              type: "string",
+              description: "ID of the space containing the folder (optional if using spaceName instead, and only needed when using folderName). If you have this ID from a previous response, use it directly rather than looking up by name."
+            },
+            spaceName: {
+              type: "string", 
+              description: "Name of the space containing the folder (optional if using spaceId instead, and only needed when using folderName). Only use this if you don't already have the space ID from previous responses."
+            },
+            name: {
+              type: "string",
+              description: "New name for the folder"
+            },
+            override_statuses: {
+              type: "boolean",
+              description: "Whether to override space statuses with folder-specific statuses"
+            }
+          },
+          required: []
+        }
+      },
+      {
+        name: "delete_folder",
+        description: "Permanently remove a folder from your ClickUp workspace. Use with caution as deletion cannot be undone and will remove all lists and tasks within the folder. Before calling, check if you already have the necessary folder ID from previous responses in the conversation history, as this avoids redundant lookups.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            folderId: {
+              type: "string",
+              description: "ID of the folder to delete (optional if using folderName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
+            },
+            folderName: {
+              type: "string",
+              description: "Name of the folder to delete - will automatically find the folder by name (optional if using folderId instead). Only use this if you don't already have the folder ID from previous responses."
+            },
+            spaceId: {
+              type: "string",
+              description: "ID of the space containing the folder (optional if using spaceName instead, and only needed when using folderName). If you have this ID from a previous response, use it directly rather than looking up by name."
+            },
+            spaceName: {
+              type: "string",
+              description: "Name of the space containing the folder (optional if using spaceId instead, and only needed when using folderName). Only use this if you don't already have the space ID from previous responses."
+            }
+          },
+          required: []
+        }
+      },
+      {
+        name: "get_list",
+        description: "Retrieve details about a specific ClickUp list including its name, content, status options, and other metadata. Before calling, check if you already have the necessary list ID from previous responses in the conversation history, as this avoids redundant lookups. Useful to understand list structure before creating or updating tasks.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            listId: {
+              type: "string",
+              description: "ID of the list to retrieve (optional if using listName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
+            },
+            listName: {
+              type: "string",
+              description: "Name of the list to retrieve - will automatically find the list by name (optional if using listId instead). Only use this if you don't already have the list ID from previous responses."
+            }
+          },
+          required: []
+        }
+      },
+      {
+        name: "update_list",
+        description: "Modify an existing ClickUp list's properties, such as name, content, or status options. Before calling, check if you already have the necessary list ID from previous responses in the conversation history, as this avoids redundant lookups. Use when reorganizing or renaming workspace elements.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            listId: {
+              type: "string",
+              description: "ID of the list to update (optional if using listName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
+            },
+            listName: {
+              type: "string",
+              description: "Name of the list to update - will automatically find the list by name (optional if using listId instead). Only use this if you don't already have the list ID from previous responses."
+            },
+            name: {
+              type: "string",
+              description: "New name for the list"
+            },
+            content: {
+              type: "string",
+              description: "New description or content for the list"
+            },
+            status: {
+              type: "string",
+              description: "New status for the list"
+            }
+          },
+          required: []
+        }
+      },
+      {
+        name: "delete_list",
+        description: "Permanently remove a list from your ClickUp workspace. Use with caution as deletion cannot be undone and will remove all tasks within the list. Before calling, check if you already have the necessary list ID from previous responses in the conversation history, as this avoids redundant lookups.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            listId: {
+              type: "string",
+              description: "ID of the list to delete (optional if using listName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
+            },
+            listName: {
+              type: "string",
+              description: "Name of the list to delete - will automatically find the list by name (optional if using listId instead). Only use this if you don't already have the list ID from previous responses."
+            }
+          },
+          required: []
         }
       }
     ]
@@ -962,6 +1114,303 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [{
             type: "text",
             text: `Successfully deleted task ${taskName || args.taskId}`
+          }]
+        };
+      }
+
+      case "get_folder": {
+        const args = request.params.arguments as { 
+          folderId?: string;
+          folderName?: string;
+          spaceId?: string;
+          spaceName?: string;
+        };
+
+        if (!args.folderId && !args.folderName) {
+          throw new Error("Either folderId or folderName is required");
+        }
+
+        let folderId = args.folderId;
+        if (!folderId && args.folderName) {
+          // If we need to look up by name, we might need the space
+          let spaceId = args.spaceId;
+          if (!spaceId && args.spaceName) {
+            const foundId = await clickup.findSpaceIDByName(args.spaceName);
+            if (!foundId) {
+              throw new Error(`Space with name "${args.spaceName}" not found`);
+            }
+            spaceId = foundId;
+          }
+          
+          if (!spaceId) {
+            // Try to find folder directly by name (will search across all spaces)
+            const result = await clickup.findFolderIDByName(args.folderName);
+            if (!result) {
+              throw new Error(`Folder with name "${args.folderName}" not found`);
+            }
+            folderId = result.id;
+          } else {
+            // Look in a specific space
+            const folder = await clickup.findFolderByName(spaceId, args.folderName);
+            if (!folder) {
+              throw new Error(`Folder with name "${args.folderName}" not found in specified space`);
+            }
+            folderId = folder.id;
+          }
+        }
+
+        // Ensure folderId is defined at this point
+        if (!folderId) {
+          throw new Error("Failed to determine folder ID");
+        }
+
+        const folder = await clickup.getFolder(folderId);
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify(folder, null, 2)
+          }]
+        };
+      }
+
+      case "update_folder": {
+        const args = request.params.arguments as { 
+          folderId?: string;
+          folderName?: string;
+          spaceId?: string;
+          spaceName?: string;
+          name?: string;
+          override_statuses?: boolean;
+        };
+
+        if (!args.folderId && !args.folderName) {
+          throw new Error("Either folderId or folderName is required");
+        }
+
+        let folderId = args.folderId;
+        if (!folderId && args.folderName) {
+          // If we need to look up by name, we might need the space
+          let spaceId = args.spaceId;
+          if (!spaceId && args.spaceName) {
+            const foundId = await clickup.findSpaceIDByName(args.spaceName);
+            if (!foundId) {
+              throw new Error(`Space with name "${args.spaceName}" not found`);
+            }
+            spaceId = foundId;
+          }
+          
+          if (!spaceId) {
+            // Try to find folder directly by name (will search across all spaces)
+            const result = await clickup.findFolderIDByName(args.folderName);
+            if (!result) {
+              throw new Error(`Folder with name "${args.folderName}" not found`);
+            }
+            folderId = result.id;
+          } else {
+            // Look in a specific space
+            const folder = await clickup.findFolderByName(spaceId, args.folderName);
+            if (!folder) {
+              throw new Error(`Folder with name "${args.folderName}" not found in specified space`);
+            }
+            folderId = folder.id;
+          }
+        }
+
+        // Ensure folderId is defined at this point
+        if (!folderId) {
+          throw new Error("Failed to determine folder ID");
+        }
+
+        // Extract update data
+        const { folderId: _, folderName: __, spaceId: ___, spaceName: ____, ...updateData } = args;
+        
+        // Call the updateFolder method
+        const updatedFolder = await clickup.updateFolder(folderId, updateData);
+        return {
+          content: [{
+            type: "text",
+            text: `Updated folder ${updatedFolder.id}: ${updatedFolder.name}`
+          }]
+        };
+      }
+
+      case "delete_folder": {
+        const args = request.params.arguments as { 
+          folderId?: string;
+          folderName?: string;
+          spaceId?: string;
+          spaceName?: string;
+        };
+
+        if (!args.folderId && !args.folderName) {
+          throw new Error("Either folderId or folderName is required");
+        }
+
+        let folderId = args.folderId;
+        if (!folderId && args.folderName) {
+          // If we need to look up by name, we might need the space
+          let spaceId = args.spaceId;
+          if (!spaceId && args.spaceName) {
+            const foundId = await clickup.findSpaceIDByName(args.spaceName);
+            if (!foundId) {
+              throw new Error(`Space with name "${args.spaceName}" not found`);
+            }
+            spaceId = foundId;
+          }
+          
+          if (!spaceId) {
+            // Try to find folder directly by name (will search across all spaces)
+            const result = await clickup.findFolderIDByName(args.folderName);
+            if (!result) {
+              throw new Error(`Folder with name "${args.folderName}" not found`);
+            }
+            folderId = result.id;
+          } else {
+            // Look in a specific space
+            const folder = await clickup.findFolderByName(spaceId, args.folderName);
+            if (!folder) {
+              throw new Error(`Folder with name "${args.folderName}" not found in specified space`);
+            }
+            folderId = folder.id;
+          }
+        }
+
+        // Ensure folderId is defined at this point
+        if (!folderId) {
+          throw new Error("Failed to determine folder ID");
+        }
+
+        // Store the folder name before deletion for the response message
+        let folderName = args.folderName;
+        if (!folderName) {
+          try {
+            const folderDetails = await clickup.getFolder(folderId);
+            folderName = folderDetails.name;
+          } catch (error) {
+            // If we can't get the folder details, just use the ID in the response
+          }
+        }
+
+        await clickup.deleteFolder(folderId);
+        return {
+          content: [{
+            type: "text",
+            text: `Successfully deleted folder ${folderName || folderId}`
+          }]
+        };
+      }
+
+      case "get_list": {
+        const args = request.params.arguments as { 
+          listId?: string;
+          listName?: string;
+        };
+
+        if (!args.listId && !args.listName) {
+          throw new Error("Either listId or listName is required");
+        }
+
+        let listId = args.listId;
+        if (!listId && args.listName) {
+          const result = await clickup.findListIDByName(args.listName);
+          if (!result) {
+            throw new Error(`List with name "${args.listName}" not found`);
+          }
+          listId = result.id;
+        }
+
+        // Ensure listId is defined at this point
+        if (!listId) {
+          throw new Error("Failed to determine list ID");
+        }
+
+        const listDetails = await clickup.getList(listId);
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify(listDetails, null, 2)
+          }]
+        };
+      }
+
+      case "update_list": {
+        const args = request.params.arguments as { 
+          listId?: string;
+          listName?: string;
+          name?: string;
+          content?: string;
+          status?: string;
+        };
+
+        if (!args.listId && !args.listName) {
+          throw new Error("Either listId or listName is required");
+        }
+
+        let listId = args.listId;
+        if (!listId && args.listName) {
+          const result = await clickup.findListIDByName(args.listName);
+          if (!result) {
+            throw new Error(`List with name "${args.listName}" not found`);
+          }
+          listId = result.id;
+        }
+
+        // Ensure listId is defined at this point
+        if (!listId) {
+          throw new Error("Failed to determine list ID");
+        }
+
+        // Extract update data
+        const { listId: _, listName: __, ...updateData } = args;
+        const updatedList = await clickup.updateList(listId, updateData);
+        return {
+          content: [{
+            type: "text",
+            text: `Updated list ${updatedList.id}: ${updatedList.name}`
+          }]
+        };
+      }
+
+      case "delete_list": {
+        const args = request.params.arguments as { 
+          listId?: string;
+          listName?: string;
+        };
+
+        if (!args.listId && !args.listName) {
+          throw new Error("Either listId or listName is required");
+        }
+
+        let listId = args.listId;
+        if (!listId && args.listName) {
+          const result = await clickup.findListIDByName(args.listName);
+          if (!result) {
+            throw new Error(`List with name "${args.listName}" not found`);
+          }
+          listId = result.id;
+        }
+
+        // Ensure listId is defined at this point
+        if (!listId) {
+          throw new Error("Failed to determine list ID");
+        }
+
+        // Store the list name before deletion for the response message
+        let listName = args.listName;
+        if (!listName) {
+          try {
+            const listDetails = await clickup.getList(listId);
+            listName = listDetails.name;
+          } catch (error) {
+            // If we can't get the list details, just use the ID in the response
+          }
+        }
+
+        await clickup.deleteList(listId);
+        return {
+          content: [{
+            type: "text",
+            text: `Successfully deleted list ${listName || listId}`
           }]
         };
       }

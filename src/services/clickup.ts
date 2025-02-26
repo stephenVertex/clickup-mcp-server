@@ -361,9 +361,16 @@ export class ClickUpService {
     });
   }
 
-  async createFolder(spaceId: string, data: CreateFolderData): Promise<ClickUpFolder> {
+  /**
+   * Updates an existing folder with new data.
+   * @param folderId - ID of the folder to update
+   * @param data - Data to update the folder with (name, override_statuses)
+   * @returns Promise resolving to the updated ClickUpFolder
+   * @throws Error if the API request fails
+   */
+  async updateFolder(folderId: string, data: { name?: string; override_statuses?: boolean }): Promise<ClickUpFolder> {
     return this.makeRequest(async () => {
-      const response = await this.client.post(`/space/${spaceId}/folder`, data);
+      const response = await this.client.put(`/folder/${folderId}`, data);
       return response.data;
     });
   }
@@ -391,6 +398,20 @@ export class ClickUpService {
   async findFolderByName(spaceId: string, folderName: string): Promise<ClickUpFolder | null> {
     const folders = await this.getFolders(spaceId);
     return folders.find(folder => folder.name.toLowerCase() === folderName.toLowerCase()) || null;
+  }
+
+  /**
+   * Creates a new folder in a space.
+   * @param spaceId - ID of the space to create the folder in
+   * @param data - Folder creation data (name, override_statuses)
+   * @returns Promise resolving to the created ClickUpFolder
+   * @throws Error if the API request fails
+   */
+  async createFolder(spaceId: string, data: CreateFolderData): Promise<ClickUpFolder> {
+    return this.makeRequest(async () => {
+      const response = await this.client.post(`/space/${spaceId}/folder`, data);
+      return response.data;
+    });
   }
 
   // Additional helper methods

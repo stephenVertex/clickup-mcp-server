@@ -32,8 +32,9 @@ npx -y @taazkareem/clickup-mcp-server \
 - 📂 **Workspace Organization**
   - Complete workspace hierarchy (spaces, folders, lists)
   - Tree structure with clear relationships
-  - Create and manage lists and folders
+  - Full CRUD operations for workspace components
   - Efficient path-based navigation
+
 
 - 🔄 **Integration Features**
   - Name or ID-based item lookup
@@ -63,6 +64,12 @@ npx -y @taazkareem/clickup-mcp-server \
 | [create_list](docs/api-reference.md#list-management) | Create list in space | `name`, `spaceId`/`spaceName` |
 | [create_folder](docs/api-reference.md#folder-management) | Create folder | `name`, `spaceId`/`spaceName` |
 | [create_list_in_folder](docs/api-reference.md#list-management) | Create list in folder | `name`, `folderId`/`folderName` |
+| [get_folder](docs/api-reference.md#folder-management) | Get folder details | `folderId`/`folderName` |
+| [update_folder](docs/api-reference.md#folder-management) | Update folder properties | `folderId`/`folderName` |
+| [delete_folder](docs/api-reference.md#folder-management) | Delete folder | `folderId`/`folderName` |
+| [get_list](docs/api-reference.md#list-management) | Get list details | `listId`/`listName` |
+| [update_list](docs/api-reference.md#list-management) | Update list properties | `listId`/`listName` |
+| [delete_list](docs/api-reference.md#list-management) | Delete list | `listId`/`listName` |
 
 See [full documentation](docs/api-reference.md) for optional parameters and advanced usage.
 
