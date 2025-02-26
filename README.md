@@ -21,6 +21,9 @@ npx -y @taazkareem/clickup-mcp-server \
 4. Replace the credentials and click Save
 5. Use Natural Language to interact with your ClickUp Workspace!
 
+## Smithery
+[![smithery badge](https://smithery.ai/badge/@TaazKareem/clickup-mcp-server)](https://smithery.ai/server/@TaazKareem/clickup-mcp-server)
+
 ## Features
 
 - 🎯 **Task Management**
