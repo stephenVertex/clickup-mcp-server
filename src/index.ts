@@ -52,7 +52,8 @@ import {
   ClickUpTask, 
   CreateListData, 
   CreateFolderData,
-  WorkspaceNode
+  WorkspaceNode,
+  TaskPriority
 } from "./types/clickup.js";
 
 // Initialize ClickUp service
@@ -130,7 +131,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Due date of the task (Unix timestamp in milliseconds). Convert dates to this format before submitting."
             }
           },
-          required: ["name"]
+          required: []
         }
       },
       {
@@ -185,11 +186,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                     description: "Array of user IDs to assign to the task"
                   }
                 },
-                required: ["name"]
+                required: []
               }
             }
           },
-          required: ["listId", "tasks"]
+          required: []
         }
       },
       {
@@ -231,7 +232,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Status of the list"
             }
           },
-          required: ["name"]
+          required: []
         }
       },
       {
@@ -257,7 +258,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Whether to override space statuses with folder-specific statuses"
             }
           },
-          required: ["name"]
+          required: []
         }
       },
       {
@@ -295,7 +296,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Status of the list (uses folder default if not specified)"
             }
           },
-          required: ["name"]
+          required: []
         }
       },
       {
@@ -325,7 +326,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Name of the destination list - will automatically find the list by name (optional if using listId instead). Only use this if you don't already have the list ID from previous responses."
             }
           },
-          required: ["taskName", "listName"]
+          required: []
         }
       },
       {
@@ -355,7 +356,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Name of the list to create the duplicate in - will automatically find the list by name (optional if using listId instead). Only use this if you don't already have the list ID from previous responses."
             }
           },
-          required: ["taskName", "listName"]
+          required: []
         }
       },
       {
@@ -384,20 +385,22 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "string",
               description: "New plain text description for the task"
             },
+            markdown_description: {
+              type: "string",
+              description: "New markdown formatted description for the task. If provided, this takes precedence over description"
+            },
             status: {
               type: "string",
               description: "New status for the task (must be a valid status in the task's list)"
             },
             priority: {
-              type: "number",
-              description: "New priority for the task (1-4), where 1 is urgent/highest priority and 4 is lowest priority"
-            },
-            dueDate: {
-              type: "string",
-              description: "New due date for the task (Unix timestamp in milliseconds). Convert dates to this format before submitting."
+              type: ["number", "null"],
+              enum: [1, 2, 3, 4, null],
+              description: "New priority for the task (1-4 or null), where 1 is urgent/highest priority and 4 is lowest priority. Set to null to clear priority.",
+              optional: true
             }
           },
-          required: ["taskName"]
+          required: []
         }
       },
       {
@@ -477,7 +480,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Object with custom field IDs as keys and desired values for filtering"
             }
           },
-          required: ["listName"]
+          required: []
         }
       },
       {
@@ -499,7 +502,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Optional: Name of the list to narrow down task search when multiple tasks have the same name"
             }
           },
-          required: ["taskName"]
+          required: []
         }
       },
       {
@@ -521,7 +524,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Optional: Name of the list to narrow down task search when multiple tasks have the same name"
             }
           },
-          required: ["taskId"]
+          required: []
         }
       },
       {
@@ -755,14 +758,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case "create_bulk_tasks": {
-        const args = request.params.arguments as unknown as { listId: string; listName?: string; tasks: CreateTaskData[] };
-        if (!args.listId && !args.listName) {
-          throw new Error("Either listId or listName is required");
-        }
-        if (!args.tasks || args.tasks.length === 0) {
+        const args = request.params.arguments as unknown as { listId?: string; listName?: string; tasks: CreateTaskData[] };
+        
+        // First validate tasks array
+        if (!args.tasks || !Array.isArray(args.tasks) || args.tasks.length === 0) {
           throw new Error("tasks array is required and must not be empty");
         }
 
+        // Validate each task has required fields
+        args.tasks.forEach((task, index) => {
+          if (!task.name) {
+            throw new Error(`Task at index ${index} is missing required field 'name'`);
+          }
+        });
+
+        // Get listId from name if needed
         let listId = args.listId;
         if (!listId && args.listName) {
           const result = await clickup.findListIDByName(args.listName);
@@ -772,12 +782,25 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           listId = result.id;
         }
 
+        // Now validate we have a listId
+        if (!listId) {
+          throw new Error("Either listId or listName must be provided");
+        }
+
         const { listId: _, listName: __, tasks } = args;
         const createdTasks = await clickup.createBulkTasks(listId, { tasks });
+        
         return {
           content: [{
             type: "text",
-            text: `Created ${createdTasks.length} tasks`
+            text: JSON.stringify({
+              message: `Created ${createdTasks.length} tasks`,
+              tasks: createdTasks.map(task => ({
+                id: task.id,
+                name: task.name,
+                url: task.url
+              }))
+            }, null, 2)
           }]
         };
       }
@@ -976,16 +999,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case "update_task": {
-        const args = request.params.arguments as unknown as UpdateTaskData & { 
+        const args = request.params.arguments as UpdateTaskData & { 
           taskId?: string;
           taskName?: string;
           listName?: string;
         };
 
+        // Require either taskId or taskName
         if (!args.taskId && !args.taskName) {
           throw new Error("Either taskId or taskName is required");
         }
 
+        // Get taskId from taskName if needed
         let taskId = args.taskId;
         if (!taskId && args.taskName) {
           const result = await clickup.findTaskByName(args.taskName, undefined, args.listName);
@@ -997,7 +1022,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           taskId = result.id;
         }
 
+        // Remove helper fields before updating
         const { taskId: _, taskName: __, listName: ___, ...updateData } = args;
+
+        // Ensure priority is properly handled
+        if (updateData.priority !== undefined && updateData.priority !== null) {
+          const priority = Number(updateData.priority);
+          if (isNaN(priority) || ![1, 2, 3, 4].includes(priority)) {
+            throw new Error("Priority must be a number between 1 and 4, or null to clear priority");
+          }
+          updateData.priority = priority as TaskPriority;
+        }
+
         const task = await clickup.updateTask(taskId!, updateData);
         return {
           content: [{
@@ -1578,3 +1614,4 @@ main().catch((error) => {
   console.error("Server error:", error);
   process.exit(1);
 });
+

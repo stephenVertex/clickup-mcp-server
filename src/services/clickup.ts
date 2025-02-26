@@ -85,15 +85,7 @@ export class ClickUpService {
    */
   private async makeRequest<T>(requestFn: () => Promise<T>): Promise<T> {
     await this.checkRateLimit();
-    try {
-      return await requestFn();
-    } catch (error: any) {
-      if (error.response?.status === 429) {
-        // Let the interceptor handle it
-        throw error;
-      }
-      throw error;
-    }
+    return await requestFn();
   }
 
   /**
@@ -218,9 +210,13 @@ export class ClickUpService {
     return this.makeRequest(async () => {
       const taskData = { ...data };
       
-      if (taskData.description && /[#*`\-\[\]>]/.test(taskData.description)) {
-        taskData.markdown_description = taskData.description;
+      // If markdown_description is provided, it takes precedence
+      if (taskData.markdown_description) {
+        // Ensure we don't send both to avoid confusion
         delete taskData.description;
+      } else if (taskData.description) {
+        // Only use description as-is, don't auto-convert to markdown
+        taskData.description = taskData.description.trim();
       }
 
       const response = await this.client.post(`/list/${listId}/task`, taskData);
@@ -238,9 +234,14 @@ export class ClickUpService {
     for (const taskData of data.tasks) {
       await this.makeRequest(async () => {
         const processedTask = { ...taskData };
-        if (processedTask.description && /[#*`\-\[\]>]/.test(processedTask.description)) {
-          processedTask.markdown_description = processedTask.description;
+        
+        // If markdown_description is provided, it takes precedence
+        if (processedTask.markdown_description) {
+          // Ensure we don't send both to avoid confusion
           delete processedTask.description;
+        } else if (processedTask.description) {
+          // Only use description as-is, don't auto-convert to markdown
+          processedTask.description = processedTask.description.trim();
         }
         
         const response = await this.client.post(`/list/${listId}/task`, processedTask);
@@ -257,7 +258,23 @@ export class ClickUpService {
    */
   async updateTask(taskId: string, data: UpdateTaskData): Promise<ClickUpTask> {
     return this.makeRequest(async () => {
-      const response = await this.client.put(`/task/${taskId}`, data);
+      const updateData = { ...data };
+      
+      // If markdown_description is provided, it takes precedence
+      if (updateData.markdown_description) {
+        // Ensure we don't send both to avoid confusion
+        delete updateData.description;
+      } else if (updateData.description) {
+        // Only use description as-is, don't auto-convert to markdown
+        updateData.description = updateData.description.trim();
+      }
+
+      // Handle null priority explicitly
+      if (updateData.priority === null) {
+        updateData.priority = null;
+      }
+
+      const response = await this.client.put(`/task/${taskId}`, updateData);
       return response.data;
     });
   }
@@ -833,13 +850,5 @@ export class ClickUpService {
       : `${task.space.name} > ${task.list.name} > ${task.name}`;
 
     return { id: task.id, path };
-  }
-
-  async getTaskStatuses(listId: string): Promise<string[]> {
-    const response = await this.getTasks(listId);
-    const statuses = [...new Set(response.tasks
-      .filter((task: ClickUpTask) => task.status !== undefined)
-      .map((task: ClickUpTask) => task.status!.status))] as string[];
-    return statuses;
   }
 } 

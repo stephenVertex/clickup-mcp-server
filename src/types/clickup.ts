@@ -1,7 +1,7 @@
 /**
  * Type for task priority levels
  */
-export type TaskPriority = 1 | 2 | 3 | 4;
+export type TaskPriority = 1 | 2 | 3 | 4 | null;
 
 /**
  * Type for custom field configuration
@@ -58,6 +58,7 @@ export interface ClickUpTask {
   id: string;
   name: string;
   description?: string;
+  markdown_description?: string;
   status?: {
     status: string;
     color: string;
@@ -261,7 +262,17 @@ export interface CreateListData {
  * Allows partial updates of any task properties.
  * Only specified fields will be updated.
  */
-export interface UpdateTaskData extends Partial<CreateTaskData> {}
+export interface UpdateTaskData {
+  name?: string;
+  description?: string;
+  markdown_description?: string;
+  priority?: TaskPriority | null;
+  due_date?: number;
+  start_date?: number;
+  assignees?: number[];
+  status?: string;
+  custom_fields?: Record<string, any>;
+}
 
 /**
  * Represents a folder in ClickUp that can contain lists.
