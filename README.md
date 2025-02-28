@@ -38,7 +38,6 @@ npx -y @taazkareem/clickup-mcp-server \
   - Full CRUD operations for workspace components
   - Efficient path-based navigation
 
-
 - 🔄 **Integration Features**
   - Name or ID-based item lookup
   - Case-insensitive name matching

@@ -114,6 +114,14 @@ export class ClickUpService {
     return ClickUpService.instance;
   }
 
+  /**
+   * Gets the team/workspace ID that was set during initialization.
+   * @returns The team/workspace ID
+   */
+  public getTeamId(): string {
+    return this.clickupTeamId;
+  }
+
   // Tasks
   /**
    * Retrieves tasks from a specific list with optional filtering.
@@ -351,6 +359,9 @@ export class ClickUpService {
 
   /**
    * Creates a new list in a space.
+   * Note: ClickUp API requires lists to be in folders, so this will:
+   * 1. Create a default folder if none specified
+   * 2. Create the list within that folder
    * @param spaceId - ID of the space to create the list in
    * @param data - List creation data (name, content, due date, etc.)
    * @returns Promise resolving to the created ClickUpList
@@ -358,7 +369,19 @@ export class ClickUpService {
    */
   async createList(spaceId: string, data: CreateListData): Promise<ClickUpList> {
     return this.makeRequest(async () => {
-      const response = await this.client.post(`/space/${spaceId}/list`, data);
+      // First, get or create a default folder
+      const folders = await this.getFolders(spaceId);
+      let defaultFolder = folders.find(f => f.name === 'Default Lists');
+      
+      if (!defaultFolder) {
+        // Create a default folder if none exists
+        defaultFolder = await this.createFolder(spaceId, {
+          name: 'Default Lists'
+        });
+      }
+      
+      // Create the list within the default folder
+      const response = await this.client.post(`/folder/${defaultFolder.id}/list`, data);
       return response.data;
     });
   }

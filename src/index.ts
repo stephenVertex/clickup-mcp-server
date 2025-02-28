@@ -53,7 +53,8 @@ import {
   CreateListData, 
   CreateFolderData,
   WorkspaceNode,
-  TaskPriority
+  TaskPriority,
+  ClickUpList
 } from "./types/clickup.js";
 
 // Initialize ClickUp service
@@ -131,7 +132,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Due date of the task (Unix timestamp in milliseconds). Convert dates to this format before submitting."
             }
           },
-          required: []
+          required: ["name"],
+          oneOf: [
+            { required: ["listId"] },
+            { required: ["listName"] }
+          ]
         }
       },
       {
@@ -186,11 +191,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                     description: "Array of user IDs to assign to the task"
                   }
                 },
-                required: []
+                required: ["name"]
               }
             }
           },
-          required: []
+          required: ["tasks"],
+          oneOf: [
+            { required: ["listId"] },
+            { required: ["listName"] }
+          ]
         }
       },
       {
@@ -201,11 +210,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             spaceId: {
               type: "string",
-              description: "ID of the space to create the list in (optional if using spaceName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
+              description: "ID of the space to create the list in (required if not using folderId). If you have this ID from a previous response, use it directly rather than looking up by name."
             },
-            spaceName: {
+            folderId: {
               type: "string",
-              description: "Name of the space to create the list in - will automatically find the space by name (optional if using spaceId instead). Only use this if you don't already have the space ID from previous responses."
+              description: "ID of the folder to create the list in (required if not using spaceId). If you have this ID from a previous response, use it directly rather than looking up by name."
             },
             name: {
               type: "string",
@@ -215,24 +224,34 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "string",
               description: "Description or content of the list"
             },
-            dueDate: {
-              type: "string",
-              description: "Due date for the list (Unix timestamp in milliseconds). Convert dates to this format before submitting."
+            assignee: {
+              type: "number",
+              description: "User ID to assign the list to"
             },
             priority: {
               type: "number",
               description: "Priority of the list (1-4), where 1 is urgent/highest priority and 4 is lowest priority. Only set when explicitly requested."
             },
-            assignee: {
-              type: "number",
-              description: "User ID to assign the list to"
+            dueDate: {
+              type: "string",
+              description: "Due date for the list (Unix timestamp in milliseconds). Convert dates to this format before submitting."
             },
             status: {
               type: "string",
               description: "Status of the list"
             }
           },
-          required: []
+          allOf: [
+            {
+              oneOf: [
+                { required: ["spaceId"] },
+                { required: ["folderId"] }
+              ]
+            },
+            {
+              required: ["name"]
+            }
+          ]
         }
       },
       {
@@ -258,7 +277,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Whether to override space statuses with folder-specific statuses"
             }
           },
-          required: []
+          required: ["name"],
+          oneOf: [
+            { required: ["spaceId"] },
+            { required: ["spaceName"] }
+          ]
         }
       },
       {
@@ -296,7 +319,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Status of the list (uses folder default if not specified)"
             }
           },
-          required: []
+          required: ["name"],
+          oneOf: [
+            { required: ["folderId"] },
+            { required: ["folderName", "spaceId"] },
+            { required: ["folderName", "spaceName"] }
+          ]
         }
       },
       {
@@ -326,7 +354,20 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Name of the destination list - will automatically find the list by name (optional if using listId instead). Only use this if you don't already have the list ID from previous responses."
             }
           },
-          required: []
+          allOf: [
+            {
+              oneOf: [
+                { required: ["taskId"] },
+                { required: ["taskName"] }
+              ]
+            },
+            {
+              oneOf: [
+                { required: ["listId"] },
+                { required: ["listName"] }
+              ]
+            }
+          ]
         }
       },
       {
@@ -356,7 +397,20 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Name of the list to create the duplicate in - will automatically find the list by name (optional if using listId instead). Only use this if you don't already have the list ID from previous responses."
             }
           },
-          required: []
+          allOf: [
+            {
+              oneOf: [
+                { required: ["taskId"] },
+                { required: ["taskName"] }
+              ]
+            },
+            {
+              oneOf: [
+                { required: ["listId"] },
+                { required: ["listName"] }
+              ]
+            }
+          ]
         }
       },
       {
@@ -400,7 +454,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               optional: true
             }
           },
-          required: []
+          oneOf: [
+            { required: ["taskId"] },
+            { required: ["taskName"] }
+          ]
         }
       },
       {
@@ -480,7 +537,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Object with custom field IDs as keys and desired values for filtering"
             }
           },
-          required: []
+          oneOf: [
+            { required: ["listId"] },
+            { required: ["listName"] }
+          ]
         }
       },
       {
@@ -502,7 +562,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Optional: Name of the list to narrow down task search when multiple tasks have the same name"
             }
           },
-          required: []
+          oneOf: [
+            { required: ["taskId"] },
+            { required: ["taskName"] }
+          ]
         }
       },
       {
@@ -524,7 +587,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Optional: Name of the list to narrow down task search when multiple tasks have the same name"
             }
           },
-          required: []
+          required: ["taskId"]
         }
       },
       {
@@ -550,7 +613,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Name of the space containing the folder (optional if using spaceId instead, and only needed when using folderName). Only use this if you don't already have the space ID from previous responses."
             }
           },
-          required: []
+          oneOf: [
+            { required: ["folderId"] },
+            { required: ["folderName", "spaceId"] },
+            { required: ["folderName", "spaceName"] }
+          ]
         }
       },
       {
@@ -584,7 +651,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Whether to override space statuses with folder-specific statuses"
             }
           },
-          required: []
+          oneOf: [
+            { required: ["folderId"] },
+            { required: ["folderName", "spaceId"] },
+            { required: ["folderName", "spaceName"] }
+          ]
         }
       },
       {
@@ -610,7 +681,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Name of the space containing the folder (optional if using spaceId instead, and only needed when using folderName). Only use this if you don't already have the space ID from previous responses."
             }
           },
-          required: []
+          oneOf: [
+            { required: ["folderId"] },
+            { required: ["folderName", "spaceId"] },
+            { required: ["folderName", "spaceName"] }
+          ]
         }
       },
       {
@@ -628,7 +703,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Name of the list to retrieve - will automatically find the list by name (optional if using listId instead). Only use this if you don't already have the list ID from previous responses."
             }
           },
-          required: []
+          oneOf: [
+            { required: ["listId"] },
+            { required: ["listName"] }
+          ]
         }
       },
       {
@@ -658,7 +736,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "New status for the list"
             }
           },
-          required: []
+          oneOf: [
+            { required: ["listId"] },
+            { required: ["listName"] }
+          ]
         }
       },
       {
@@ -676,7 +757,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Name of the list to delete - will automatically find the list by name (optional if using listId instead). Only use this if you don't already have the list ID from previous responses."
             }
           },
-          required: []
+          oneOf: [
+            { required: ["listId"] },
+            { required: ["listName"] }
+          ]
         }
       }
     ]
@@ -806,26 +890,73 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case "create_list": {
-        const args = request.params.arguments as unknown as CreateListData & { spaceId?: string; spaceName?: string };
-        if (!args.name) {
-          throw new Error("name is required");
-        }
-        
-        let spaceId = args.spaceId;
-        if (!spaceId && args.spaceName) {
-          const foundId = await clickup.findSpaceIDByName(args.spaceName);
-          if (!foundId) {
-            throw new Error(`Space with name "${args.spaceName}" not found`);
-          }
-          spaceId = foundId;
-        }
-        
-        if (!spaceId) {
-          throw new Error("Either spaceId or spaceName must be provided");
+        interface CreateListArgs {
+          spaceId?: string;
+          spaceName?: string;
+          folderId?: string;
+          folderName?: string;
+          name: string;
+          content?: string;
+          dueDate?: number;
+          priority?: TaskPriority;
+          assignee?: number;
+          status?: string;
         }
 
-        const { spaceId: _, spaceName: __, ...listData } = args;
-        const list = await clickup.createList(spaceId, listData);
+        const args = request.params.arguments ? request.params.arguments as unknown as CreateListArgs : { name: '' };
+        
+        if (!args.name) {
+          throw new Error("List name is required");
+        }
+
+        // Validate that we have either spaceId/spaceName OR folderId/folderName, but not both
+        const hasSpace = !!(args.spaceId || args.spaceName);
+        const hasFolder = !!(args.folderId || args.folderName);
+        
+        if (!hasSpace && !hasFolder) {
+          throw new Error("Either spaceId/spaceName or folderId/folderName must be provided");
+        }
+        if (hasSpace && hasFolder) {
+          throw new Error("Cannot provide both space and folder identifiers. Use either spaceId/spaceName OR folderId/folderName");
+        }
+
+        // Prepare the list data
+        const listData: CreateListData = {
+          name: args.name,
+          content: args.content,
+          due_date: args.dueDate,
+          priority: args.priority,
+          assignee: args.assignee,
+          status: args.status
+        };
+
+        let list: ClickUpList;
+
+        if (hasSpace) {
+          // Handle space-based creation
+          let spaceId = args.spaceId;
+          if (!spaceId && args.spaceName) {
+            const teamId = await clickup.getTeamId();
+            const space = await clickup.findSpaceByName(args.spaceName, teamId);
+            if (!space) {
+              throw new Error(`Space with name "${args.spaceName}" not found`);
+            }
+            spaceId = space.id;
+          }
+          list = await clickup.createList(spaceId!, listData);
+        } else {
+          // Handle folder-based creation
+          let folderId = args.folderId;
+          if (!folderId && args.folderName) {
+            const result = await clickup.findFolderIDByName(args.folderName);
+            if (!result) {
+              throw new Error(`Folder with name "${args.folderName}" not found`);
+            }
+            folderId = result.id;
+          }
+          list = await clickup.createListInFolder(folderId!, listData);
+        }
+
         return {
           content: [{
             type: "text",
