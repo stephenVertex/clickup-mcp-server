@@ -61,7 +61,7 @@ npx -y @taazkareem/clickup-mcp-server \
 | [update_task](docs/api-reference.md#task-management) | Modify task | `taskId`/`taskName` |
 | [get_tasks](docs/api-reference.md#task-retrieval) | Get tasks from list | `listId`/`listName` |
 | [get_task](docs/api-reference.md#task-retrieval) | Get task details | `taskId`/`taskName` |
-| [delete_task](docs/api-reference.md#task-management) | Remove task | `taskId` |
+| [delete_task](docs/api-reference.md#task-management) | Remove task | `taskId`/`taskName` |
 | [move_task](docs/api-reference.md#task-management) | Move task | `taskId`/`taskName`, `listId`/`listName` |
 | [duplicate_task](docs/api-reference.md#task-management) | Copy task | `taskId`/`taskName`, `listId`/`listName` |
 | [create_list](docs/api-reference.md#list-management) | Create list in space | `name`, `spaceId`/`spaceName` |

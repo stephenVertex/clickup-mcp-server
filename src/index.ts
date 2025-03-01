@@ -131,7 +131,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Due date of the task (Unix timestamp in milliseconds). Convert dates to this format before submitting."
             }
           },
-          required: []
+          required: ["name"]
         }
       },
       {
@@ -190,7 +190,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               }
             }
           },
-          required: []
+          required: ["tasks"]
         }
       },
       {
@@ -232,7 +232,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Status of the list"
             }
           },
-          required: []
+          required: ["name"]
         }
       },
       {
@@ -258,7 +258,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Whether to override space statuses with folder-specific statuses"
             }
           },
-          required: []
+          required: ["name"]
         }
       },
       {
@@ -267,6 +267,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: "object",
           properties: {
+            name: {
+              type: "string",
+              description: "Name of the list"
+            },
             folderId: {
               type: "string",
               description: "ID of the folder to create the list in (optional if using folderName instead). If you have this ID from a previous response, use it directly rather than looking up by name."
@@ -283,10 +287,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "string",
               description: "Name of the space containing the folder - will automatically find the space by name (optional if using spaceId instead). Only use this if you don't already have the space ID from previous responses."
             },
-            name: {
-              type: "string",
-              description: "Name of the list"
-            },
             content: {
               type: "string",
               description: "Description or content of the list"
@@ -296,7 +296,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Status of the list (uses folder default if not specified)"
             }
           },
-          required: []
+          required: ["name"]
         }
       },
       {
@@ -1123,33 +1123,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case "delete_task": {
-        const args = request.params.arguments as { 
-          taskId: string; // Make taskId required
-          taskName?: string;
-          listName?: string;
-        };
-
-        // Validate the required taskId parameter
-        if (!args.taskId) {
-          throw new Error("taskId is required for deletion operations");
+        const args = request.params.arguments as { taskId?: string; taskName?: string; listName?: string };
+        
+        if (!args.taskId && !args.taskName) {
+          throw new Error("Either taskId or taskName is required");
         }
 
-        // Store the task name before deletion for the response message
-        let taskName = args.taskName;
-        if (!taskName) {
-          try {
-            const task = await clickup.getTask(args.taskId);
-            taskName = task.name;
-          } catch (error) {
-            // If we can't get the task details, just use the ID in the response
-          }
-        }
-
-        await clickup.deleteTask(args.taskId);
+        await clickup.deleteTask(args.taskId, args.taskName, args.listName);
         return {
           content: [{
             type: "text",
-            text: `Successfully deleted task ${taskName || args.taskId}`
+            text: `Successfully deleted task${args.taskName ? ` "${args.taskName}"` : ` with ID ${args.taskId}`}`
           }]
         };
       }

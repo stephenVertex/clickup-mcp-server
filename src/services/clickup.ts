@@ -281,11 +281,31 @@ export class ClickUpService {
 
   /**
    * Deletes a task from the workspace.
+   * Can delete by taskId directly or find by taskName first.
    * Handles rate limiting automatically.
+   * @param taskId - ID of the task to delete (optional if taskName provided)
+   * @param taskName - Name of the task to delete (optional if taskId provided)
+   * @param listName - Optional list name to narrow down task search
+   * @throws Error if neither taskId nor taskName is provided, or if task not found
    */
-  async deleteTask(taskId: string): Promise<void> {
+  async deleteTask(taskId?: string, taskName?: string, listName?: string): Promise<void> {
     return this.makeRequest(async () => {
-      await this.client.delete(`/task/${taskId}`);
+      let finalTaskId = taskId;
+
+      // If no taskId but taskName provided, find the task first
+      if (!taskId && taskName) {
+        const taskInfo = await this.findTaskByName(taskName, undefined, listName);
+        if (!taskInfo) {
+          throw new Error(`Task "${taskName}" not found${listName ? ` in list "${listName}"` : ''}`);
+        }
+        finalTaskId = taskInfo.id;
+      }
+
+      if (!finalTaskId) {
+        throw new Error('Either taskId or taskName must be provided');
+      }
+
+      await this.client.delete(`/task/${finalTaskId}`);
     });
   }
 
