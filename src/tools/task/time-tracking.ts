@@ -55,6 +55,58 @@ export const getTaskTimeEntriesTool = {
 };
 
 /**
+ * Tool definition for getting workspace time entries
+ */
+export const getWorkspaceTimeEntriesTool = {
+  name: "get_workspace_time_entries",
+  description: "Purpose: Retrieve time entries from across the entire workspace with powerful filtering options.\n\nValid Usage:\n1. Apply any combination of filters (dates, tasks, lists, folders, spaces, assignees)\n2. At least one filter parameter is recommended for efficient results\n\nNotes:\n- Provides workspace-wide time entry access across all tasks\n- Date range filtering is especially useful for generating time reports\n- Returns complete time entry details including descriptions, assignees, and task info",
+  inputSchema: {
+    type: "object",
+    properties: {
+      startDate: {
+        type: "string",
+        description: "Start date filter. Supports Unix timestamps (in milliseconds) and natural language expressions like '2024-04-01', 'last month', 'start of week', etc."
+      },
+      endDate: {
+        type: "string",
+        description: "End date filter. Supports Unix timestamps (in milliseconds) and natural language expressions like '2024-04-30', 'yesterday', 'end of month', etc."
+      },
+      taskId: {
+        type: "string",
+        description: "Filter time entries for a specific task. Note: Only one location filter (task, list, folder, space) can be used at a time."
+      },
+      taskName: {
+        type: "string", 
+        description: "Filter time entries by task name. Will be resolved to a taskId. Provide listName for faster lookup."
+      },
+      listId: {
+        type: "string",
+        description: "Filter time entries for a specific list. Cannot be used with other location filters."
+      },
+      listName: {
+        type: "string",
+        description: "Filter time entries by list name. Will be resolved to a listId."
+      },
+      folderId: {
+        type: "string",
+        description: "Filter time entries for a specific folder. Cannot be used with other location filters."
+      },
+      spaceId: {
+        type: "string",
+        description: "Filter time entries for a specific space. Cannot be used with other location filters."
+      },
+      assignees: {
+        type: "array",
+        items: {
+          type: "number"
+        },
+        description: "Filter time entries by assignee user IDs."
+      }
+    }
+  }
+};
+
+/**
  * Tool definition for starting time tracking
  */
 export const startTimeTrackingTool = {
@@ -266,6 +318,154 @@ export async function handleGetTaskTimeEntries(params: any) {
     };
   } catch (error) {
     logger.error("Error getting task time entries", error);
+    return {
+      success: false,
+      error: {
+        message: (error as Error).message || "An unknown error occurred"
+      }
+    };
+  }
+}
+
+/**
+ * Handle get workspace time entries tool
+ */
+export async function handleGetWorkspaceTimeEntries(params: any) {
+  logger.info("Handling request to get workspace time entries", params);
+  
+  try {
+    // Parse location filters - resolve task/list names to IDs if provided
+    let taskId: string | undefined;
+    let listId: string | undefined;
+    let locationFilterCount = 0;
+    
+    // Handle taskId/taskName resolution
+    if (params.taskId || params.taskName) {
+      taskId = await getTaskId(params.taskId, params.taskName, params.listName);
+      if (!taskId && (params.taskId || params.taskName)) {
+        return {
+          success: false,
+          error: {
+            message: "Task not found. Please provide a valid taskId or taskName + listName combination."
+          }
+        };
+      }
+      if (taskId) locationFilterCount++;
+    }
+    
+    // Handle listId/listName resolution (only if not using taskId)
+    if (!taskId && (params.listId || params.listName)) {
+      // TODO: Implement list name resolution if needed
+      listId = params.listId;
+      if (listId) locationFilterCount++;
+    }
+    
+    // Count other location filters
+    if (params.folderId) locationFilterCount++;
+    if (params.spaceId) locationFilterCount++;
+    
+    // Warn if multiple location filters are provided (API only accepts one)
+    if (locationFilterCount > 1) {
+      logger.warn("Multiple location filters provided. Only one will be used based on priority: task > list > folder > space");
+    }
+    
+    // Parse date filters
+    let startDate: number | undefined;
+    let endDate: number | undefined;
+    
+    if (params.startDate) {
+      startDate = parseDueDate(params.startDate);
+      if (!startDate) {
+        return {
+          success: false,
+          error: {
+            message: "Invalid start date format. Use a Unix timestamp (in milliseconds) or a natural language date string."
+          }
+        };
+      }
+    }
+    
+    if (params.endDate) {
+      endDate = parseDueDate(params.endDate);
+      if (!endDate) {
+        return {
+          success: false,
+          error: {
+            message: "Invalid end date format. Use a Unix timestamp (in milliseconds) or a natural language date string."
+          }
+        };
+      }
+    }
+    
+    // Build options for service call
+    const options: any = {
+      startDate,
+      endDate
+    };
+    
+    // Add location filters based on priority
+    if (taskId) {
+      options.taskId = taskId;
+    } else if (listId) {
+      options.listId = listId;
+    } else if (params.folderId) {
+      options.folderId = params.folderId;
+    } else if (params.spaceId) {
+      options.spaceId = params.spaceId;
+    }
+    
+    // Add assignee filter if provided
+    if (params.assignees && Array.isArray(params.assignees)) {
+      options.assignees = params.assignees;
+    }
+    
+    // Get time entries
+    const result = await timeTrackingService.getWorkspaceTimeEntries(options);
+    
+    if (!result.success) {
+      return {
+        success: false,
+        error: {
+          message: result.error?.message || "Failed to get workspace time entries"
+        }
+      };
+    }
+    
+    const timeEntries = result.data || [];
+    
+    // Format the response
+    return {
+      success: true,
+      time_entries: timeEntries.map(entry => ({
+        id: entry.id,
+        description: entry.description,
+        start: entry.start,
+        end: entry.end,
+        duration: formatDuration(entry.duration),
+        duration_ms: entry.duration,
+        billable: entry.billable,
+        tags: entry.tags,
+        user: {
+          id: entry.user.id,
+          username: entry.user.username
+        },
+        task: {
+          id: entry.task.id,
+          name: entry.task.name,
+          status: entry.task.status.status
+        },
+        task_location: {
+          list_id: entry.task_location.list_id,
+          list_name: entry.task_location.list_name,
+          folder_id: entry.task_location.folder_id,
+          folder_name: entry.task_location.folder_name,
+          space_id: entry.task_location.space_id,
+          space_name: entry.task_location.space_name
+        }
+      }))
+    };
+  } catch (error) {
+    logger.error("Error getting workspace time entries", error);
     return {
       success: false,
       error: {
@@ -725,6 +925,7 @@ function parseDuration(durationString: string): number {
 // Export all time tracking tools
 export const timeTrackingTools = [
   getTaskTimeEntriesTool,
+  getWorkspaceTimeEntriesTool,
   startTimeTrackingTool,
   stopTimeTrackingTool,
   addTimeEntryTool,
@@ -735,6 +936,7 @@ export const timeTrackingTools = [
 // Export all time tracking handlers
 export const timeTrackingHandlers = {
   get_task_time_entries: handleGetTaskTimeEntries,
+  get_workspace_time_entries: handleGetWorkspaceTimeEntries,
   start_time_tracking: handleStartTimeTracking,
   stop_time_tracking: handleStopTimeTracking,
   add_time_entry: handleAddTimeEntry,

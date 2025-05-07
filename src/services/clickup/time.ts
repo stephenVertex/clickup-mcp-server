@@ -159,6 +159,75 @@ export class TimeTrackingService extends BaseClickUpService {
   }
   
   /**
+   * Get all time entries for a workspace with filtering options
+   * @param options Filter options
+   * @returns List of time entries
+   */
+  async getWorkspaceTimeEntries(options: {
+    startDate?: number;  // Unix timestamp in milliseconds
+    endDate?: number;    // Unix timestamp in milliseconds
+    assignees?: number[];  // Array of user IDs
+    taskId?: string;     // Filter by specific task
+    listId?: string;     // Filter by specific list
+    folderId?: string;   // Filter by specific folder
+    spaceId?: string;    // Filter by specific space
+  } = {}): Promise<ServiceResponse<ClickUpTimeEntry[]>> {
+    try {
+      this.logOperation('getWorkspaceTimeEntries', options);
+      
+      // Build query parameters
+      let query: Record<string, any> = {};
+      if (options.startDate) query.start_date = options.startDate;
+      if (options.endDate) query.end_date = options.endDate;
+      
+      // Location filters - only one can be included at a time
+      if (options.taskId) query.task_id = options.taskId;
+      else if (options.listId) query.list_id = options.listId;
+      else if (options.folderId) query.folder_id = options.folderId;
+      else if (options.spaceId) query.space_id = options.spaceId;
+      
+      // User filters
+      if (options.assignees && options.assignees.length > 0) {
+        // If multiple assignees, join with comma
+        query.assignee = options.assignees.join(',');
+      }
+      
+      const path = `/team/${this.teamId}/time_entries`;
+      this.traceRequest('GET', path, query);
+      
+      const response = await this.makeRequest<AxiosResponse<TimeEntriesResponse>>(() =>
+        this.client.get(path, {
+          params: query
+        })
+      );
+      
+      return {
+        success: true,
+        data: response.data.data
+      };
+    } catch (error) {
+      if (error instanceof ClickUpServiceError) {
+        return {
+          success: false,
+          error: {
+            message: error.message,
+            code: error.code,
+            details: error.data
+          }
+        };
+      }
+      
+      return {
+        success: false,
+        error: {
+          message: `Failed to get workspace time entries: ${(error as Error).message}`,
+          code: ErrorCode.UNKNOWN
+        }
+      };
+    }
+  }
+  
+  /**
    * Start time tracking on a task
    * @param data Task ID and optional parameters
    * @returns The created time entry
