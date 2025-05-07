@@ -331,7 +331,10 @@ export async function handleGetTaskTimeEntries(params: any) {
  * Handle get workspace time entries tool
  */
 export async function handleGetWorkspaceTimeEntries(params: any) {
-  logger.info("Handling request to get workspace time entries", params);
+  logger.info("Handling request to get workspace time entries", { 
+    params,
+    rawParams: JSON.stringify(params)
+  });
   
   try {
     // Parse location filters - resolve task/list names to IDs if provided
@@ -341,8 +344,27 @@ export async function handleGetWorkspaceTimeEntries(params: any) {
     
     // Handle taskId/taskName resolution
     if (params.taskId || params.taskName) {
+      logger.debug("Resolving task ID from params", { 
+        taskId: params.taskId, 
+        taskName: params.taskName,
+        listName: params.listName
+      });
+      
       taskId = await getTaskId(params.taskId, params.taskName, params.listName);
+      
+      logger.debug("Task ID resolution result", { 
+        resolvedTaskId: taskId,
+        originalTaskId: params.taskId,
+        originalTaskName: params.taskName
+      });
+      
       if (!taskId && (params.taskId || params.taskName)) {
+        logger.warn("Task not found during ID resolution", {
+          taskId: params.taskId,
+          taskName: params.taskName,
+          listName: params.listName
+        });
+        
         return {
           success: false,
           error: {
@@ -932,6 +954,9 @@ export const timeTrackingTools = [
   deleteTimeEntryTool,
   getCurrentTimeEntryTool
 ];
+
+// Debug log for tool registration
+console.error(`DEBUG TIME TRACKING: Exporting ${timeTrackingTools.length} tools including: ${timeTrackingTools.map(t => t.name).join(', ')}`);
 
 // Export all time tracking handlers
 export const timeTrackingHandlers = {

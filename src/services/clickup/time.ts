@@ -195,18 +195,40 @@ export class TimeTrackingService extends BaseClickUpService {
       const path = `/team/${this.teamId}/time_entries`;
       this.traceRequest('GET', path, query);
       
+      // Log detailed request information
+      this.logger.info(`Making request to get workspace time entries`, {
+        path,
+        teamId: this.teamId,
+        query,
+        options
+      });
+      
       const response = await this.makeRequest<AxiosResponse<TimeEntriesResponse>>(() =>
         this.client.get(path, {
           params: query
         })
       );
       
+      // Log success information
+      this.logger.info(`Successfully retrieved workspace time entries`, {
+        count: response.data.data.length,
+        first: response.data.data.length > 0 ? response.data.data[0].id : null
+      });
+      
       return {
         success: true,
         data: response.data.data
       };
     } catch (error) {
+      // Enhanced error logging
       if (error instanceof ClickUpServiceError) {
+        this.logger.error(`ClickUp API error in getWorkspaceTimeEntries`, {
+          message: error.message,
+          code: error.code,
+          data: error.data,
+          options
+        });
+        
         return {
           success: false,
           error: {
@@ -216,6 +238,12 @@ export class TimeTrackingService extends BaseClickUpService {
           }
         };
       }
+      
+      this.logger.error(`Unexpected error in getWorkspaceTimeEntries`, {
+        message: (error as Error).message,
+        stack: (error as Error).stack,
+        options
+      });
       
       return {
         success: false,

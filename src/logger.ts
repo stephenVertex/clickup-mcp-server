@@ -21,9 +21,13 @@ const pid = process.pid;
 
 // Create a write stream for logging - use a fixed filename in the build directory
 const logFileName = 'server.log';
-const logStream = createWriteStream(join(__dirname, logFileName), { flags: 'w' });
+const logStream = createWriteStream(join(__dirname, logFileName), { flags: 'a' });
 // Write init message to log file only
-logStream.write(`Logging initialized to ${join(__dirname, logFileName)}\n`);
+const initMessage = `\n[${new Date().toISOString()}] Logging initialized to ${join(__dirname, logFileName)}\n`;
+logStream.write(initMessage);
+
+// For debugging - also log to console
+console.error(initMessage);
 
 // Use the configured log level from config.ts
 const configuredLevel = config.logLevel;
@@ -90,6 +94,12 @@ export function log(level: 'trace' | 'debug' | 'info' | 'warn' | 'error', messag
 
   // Write to file only, not to stderr which would interfere with JSON-RPC
   logStream.write(logMessage + '\n');
+  
+  // For debugging, also output critical errors to console
+  if (level === 'error') {
+    // This will interfere with JSON-RPC but helpful for debugging
+    console.error(`CRITICAL ERROR: ${message}`, data);
+  }
 }
 
 /**

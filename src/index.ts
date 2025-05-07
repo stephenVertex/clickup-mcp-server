@@ -37,12 +37,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
   error("Uncaught Exception", { message: err.message, stack: err.stack });
+  console.error("CRITICAL: Uncaught Exception", err); // Echo to console for debugging
   process.exit(1);
 });
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
   error("Unhandled Rejection", { reason });
+  console.error("CRITICAL: Unhandled Rejection", reason); // Echo to console for debugging
   process.exit(1);
 });
 

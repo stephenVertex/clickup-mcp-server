@@ -31,6 +31,7 @@ import {
   attachTaskFileTool,
   getWorkspaceTasksTool,
   getTaskTimeEntriesTool,
+  getWorkspaceTimeEntriesTool,
   startTimeTrackingTool,
   stopTimeTrackingTool,
   addTimeEntryTool,
@@ -52,6 +53,7 @@ import {
   handleAttachTaskFile,
   handleGetWorkspaceTasks,
   handleGetTaskTimeEntries,
+  handleGetWorkspaceTimeEntries,
   handleStartTimeTracking,
   handleStopTimeTracking,
   handleAddTimeEntry,
@@ -133,43 +135,64 @@ export function configureServer() {
   // Register ListTools handler
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     logger.debug("Received ListTools request");
+    
+    // Build the tool list
+    const allTools = [
+      workspaceHierarchyTool,
+      createTaskTool,
+      getTaskTool,
+      updateTaskTool,
+      moveTaskTool,
+      duplicateTaskTool,
+      deleteTaskTool,
+      getTaskCommentsTool,
+      createTaskCommentTool,
+      attachTaskFileTool,
+      createBulkTasksTool,
+      updateBulkTasksTool,
+      moveBulkTasksTool,
+      deleteBulkTasksTool,
+      getWorkspaceTasksTool,
+      getTaskTimeEntriesTool,
+      getWorkspaceTimeEntriesTool,
+      startTimeTrackingTool,
+      stopTimeTrackingTool,
+      addTimeEntryTool,
+      deleteTimeEntryTool,
+      getCurrentTimeEntryTool,
+      createListTool,
+      createListInFolderTool,
+      getListTool,
+      updateListTool,
+      deleteListTool,
+      createFolderTool,
+      getFolderTool,
+      updateFolderTool,
+      deleteFolderTool,
+      getSpaceTagsTool,
+      addTagToTaskTool,
+      removeTagFromTaskTool,
+      ...documentModule()
+    ];
+    
+    // Filter disabled tools
+    const filteredTools = allTools.filter(tool => !config.disabledTools.includes(tool.name));
+    
+    // Debug info
+    logger.info(`Returning ${filteredTools.length} tools`, {
+      total: filteredTools.length,
+      toolNames: filteredTools.map(t => t.name).join(', ')
+    });
+    
+    // This will output to console but will be useful for debugging
+    console.error(`DEBUG: Returning ${filteredTools.length} tools including: ${filteredTools.slice(0, 5).map(t => t.name).join(', ')}...`);
+    
+    // Check specifically for workspace time entries tool
+    const hasWorkspaceTimeEntries = filteredTools.some(t => t.name === "get_workspace_time_entries");
+    console.error(`DEBUG: get_workspace_time_entries registered: ${hasWorkspaceTimeEntries}`);
+    
     return {
-      tools: [
-        workspaceHierarchyTool,
-        createTaskTool,
-        getTaskTool,
-        updateTaskTool,
-        moveTaskTool,
-        duplicateTaskTool,
-        deleteTaskTool,
-        getTaskCommentsTool,
-        createTaskCommentTool,
-        attachTaskFileTool,
-        createBulkTasksTool,
-        updateBulkTasksTool,
-        moveBulkTasksTool,
-        deleteBulkTasksTool,
-        getWorkspaceTasksTool,
-        getTaskTimeEntriesTool,
-        startTimeTrackingTool,
-        stopTimeTrackingTool,
-        addTimeEntryTool,
-        deleteTimeEntryTool,
-        getCurrentTimeEntryTool,
-        createListTool,
-        createListInFolderTool,
-        getListTool,
-        updateListTool,
-        deleteListTool,
-        createFolderTool,
-        getFolderTool,
-        updateFolderTool,
-        deleteFolderTool,
-        getSpaceTagsTool,
-        addTagToTaskTool,
-        removeTagFromTaskTool,
-        ...documentModule()
-      ].filter(tool => !config.disabledTools.includes(tool.name))
+      tools: filteredTools
     };
   });
 
@@ -188,10 +211,9 @@ export function configureServer() {
   server.setRequestHandler(CallToolRequestSchema, async (req) => {
     const { name, arguments: params } = req.params;
     
-    // Improved logging with more context
-    logger.info(`Received CallTool request for tool: ${name}`, { 
-      params 
-    });
+    // Debug logging
+    logger.info(`Received CallTool request for tool: ${name}`, { params });
+    console.error(`DEBUG: Received call for tool: ${name}`);
     
     // Check if the tool is disabled
     if (config.disabledTools.includes(name)) {
@@ -261,6 +283,8 @@ export function configureServer() {
           return handleRemoveTagFromTask(params);
         case "get_task_time_entries":
           return handleGetTaskTimeEntries(params);
+        case "get_workspace_time_entries":
+          return handleGetWorkspaceTimeEntries(params);
         case "start_time_tracking":
           return handleStartTimeTracking(params);
         case "stop_time_tracking":
