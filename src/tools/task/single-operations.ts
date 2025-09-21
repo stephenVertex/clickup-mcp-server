@@ -160,6 +160,49 @@ export const createTaskTool = {
 };
 
 /**
+ * Tool definition for creating a task from template
+ */
+export const createTaskFromTemplateTool = {
+  name: "create_task_from_template",
+  description: `Creates a task from a ClickUp template in a list. Use listId (preferred) or listName + templateId. Required: templateId + list info. Optional: custom name override.`,
+  inputSchema: {
+    type: "object",
+    properties: {
+      templateId: {
+        type: "string",
+        description: "REQUIRED: ID of the task template to use for creating the task."
+      },
+      listId: {
+        type: "string",
+        description: "REQUIRED (unless listName provided): ID of the list to create the task in. If you have this ID from a previous response, use it directly rather than looking up by name."
+      },
+      listName: {
+        type: "string",
+        description: "REQUIRED (unless listId provided): Name of the list to create the task in - will automatically find the list by name."
+      },
+      name: {
+        type: "string",
+        description: "Optional: Override the default name from the template. Put a relevant emoji followed by a blank space before the name if provided."
+      }
+    },
+    required: ["templateId"]
+  }
+};
+
+/**
+ * Tool definition for getting task templates
+ */
+export const getTaskTemplatesTool = {
+  name: "get_task_templates",
+  description: `Retrieves all available task templates for the workspace/team. No parameters required - returns all templates the user has access to.`,
+  inputSchema: {
+    type: "object",
+    properties: {},
+    required: []
+  }
+};
+
+/**
  * Tool definition for updating a task
  */
 export const updateTaskTool = {

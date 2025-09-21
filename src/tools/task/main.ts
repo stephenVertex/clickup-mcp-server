@@ -47,6 +47,8 @@ import {
 // Import handlers
 import {
   createTaskHandler,
+  createTaskFromTemplateHandler,
+  getTaskTemplatesHandler,
   getTaskHandler,
   getTasksHandler,
   updateTaskHandler,
@@ -96,6 +98,11 @@ function createHandlerWrapper<T>(
 //=============================================================================
 
 export const handleCreateTask = createHandlerWrapper(createTaskHandler);
+export const handleCreateTaskFromTemplate = createHandlerWrapper(createTaskFromTemplateHandler);
+export const handleGetTaskTemplates = createHandlerWrapper(getTaskTemplatesHandler, (templates) => ({
+  templates,
+  count: templates.length
+}));
 export const handleGetTask = createHandlerWrapper(getTaskHandler);
 export const handleGetTasks = createHandlerWrapper(getTasksHandler, (tasks) => ({
   tasks,

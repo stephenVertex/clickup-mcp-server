@@ -11,13 +11,15 @@
  */
 
 import { BaseClickUpService, ErrorCode, ClickUpServiceError, ServiceResponse } from '../base.js';
-import { 
-  ClickUpTask, 
-  CreateTaskData, 
-  UpdateTaskData, 
-  TaskFilters, 
+import {
+  ClickUpTask,
+  CreateTaskData,
+  UpdateTaskData,
+  TaskFilters,
   TasksResponse,
-  TaskPriority
+  TaskPriority,
+  ClickUpTaskTemplate,
+  TaskTemplatesResponse
 } from '../types.js';
 import { ListService } from '../list.js';
 import { WorkspaceService } from '../workspace.js';
@@ -192,14 +194,14 @@ export class TaskServiceCore extends BaseClickUpService {
    */
   async createTask(listId: string, taskData: CreateTaskData): Promise<ClickUpTask> {
     this.logOperation('createTask', { listId, ...taskData });
-    
+
     try {
       return await this.makeRequest(async () => {
         const response = await this.client.post<ClickUpTask | string>(
           `/list/${listId}/task`,
           taskData
         );
-        
+
         // Handle both JSON and text responses
         const data = response.data;
         if (typeof data === 'string') {
@@ -215,11 +217,87 @@ export class TaskServiceCore extends BaseClickUpService {
             data
           );
         }
-        
+
         return data;
       });
     } catch (error) {
       throw this.handleError(error, 'Failed to create task');
+    }
+  }
+
+  /**
+   * Create a new task from a template in the specified list
+   * @param listId The ID of the list to create the task in
+   * @param templateId The ID of the template to use
+   * @param taskName Optional name for the task (if not provided, template default is used)
+   * @returns The created task
+   */
+  async createTaskFromTemplate(listId: string, templateId: string, taskName?: string): Promise<ClickUpTask> {
+    this.logOperation('createTaskFromTemplate', { listId, templateId, taskName });
+
+    try {
+      return await this.makeRequest(async () => {
+        const payload: { name?: string } = {};
+        if (taskName) {
+          payload.name = taskName;
+        }
+
+        const response = await this.client.post<ClickUpTask | string>(
+          `/list/${listId}/taskTemplate/${templateId}`,
+          payload
+        );
+
+        // Handle both JSON and text responses
+        const data = response.data;
+        if (typeof data === 'string') {
+          // If we got a text response, try to extract task ID from common patterns
+          const idMatch = data.match(/task.*?(\w{9})/i);
+          if (idMatch) {
+            // If we found an ID, fetch the full task details
+            return await this.getTask(idMatch[1]);
+          }
+          throw new ClickUpServiceError(
+            'Received unexpected text response from API',
+            ErrorCode.UNKNOWN,
+            data
+          );
+        }
+
+        return data;
+      });
+    } catch (error) {
+      throw this.handleError(error, 'Failed to create task from template');
+    }
+  }
+
+  /**
+   * Get all task templates for the team/workspace
+   * @returns Array of task templates
+   */
+  async getTaskTemplates(): Promise<ClickUpTaskTemplate[]> {
+    this.logOperation('getTaskTemplates', { teamId: this.teamId });
+
+    try {
+      return await this.makeRequest(async () => {
+        const response = await this.client.get<TaskTemplatesResponse | string>(
+          `/team/${this.teamId}/taskTemplate`
+        );
+
+        // Handle both JSON and text responses
+        const data = response.data;
+        if (typeof data === 'string') {
+          throw new ClickUpServiceError(
+            'Received unexpected text response from API',
+            ErrorCode.UNKNOWN,
+            data
+          );
+        }
+
+        // The API returns an object with templates array
+        return data.templates || [];
+      });
+    } catch (error) {
+      throw this.handleError(error, 'Failed to get task templates');
     }
   }
 

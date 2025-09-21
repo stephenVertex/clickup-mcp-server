@@ -17,6 +17,8 @@ import config from "./config.js";
 import { workspaceHierarchyTool, handleGetWorkspaceHierarchy } from "./tools/workspace.js";
 import {
   createTaskTool,
+  createTaskFromTemplateTool,
+  getTaskTemplatesTool,
   updateTaskTool,
   moveTaskTool,
   duplicateTaskTool,
@@ -37,6 +39,8 @@ import {
   deleteTimeEntryTool,
   getCurrentTimeEntryTool,
   handleCreateTask,
+  handleCreateTaskFromTemplate,
+  handleGetTaskTemplates,
   handleUpdateTask,
   handleMoveTask,
   handleDuplicateTask,
@@ -175,6 +179,8 @@ export function configureServer() {
       tools: [
         workspaceHierarchyTool,
         createTaskTool,
+        createTaskFromTemplateTool,
+        getTaskTemplatesTool,
         getTaskTool,
         updateTaskTool,
         moveTaskTool,
@@ -256,6 +262,10 @@ export function configureServer() {
           return handleGetWorkspaceHierarchy();
         case "create_task":
           return handleCreateTask(params);
+        case "create_task_from_template":
+          return handleCreateTaskFromTemplate(params);
+        case "get_task_templates":
+          return handleGetTaskTemplates(params);
         case "update_task":
           return handleUpdateTask(params);
         case "move_task":

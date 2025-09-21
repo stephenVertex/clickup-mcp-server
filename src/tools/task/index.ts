@@ -11,8 +11,10 @@
 export * from './main.js';
 
 // Re-export single task operation tools
-export { 
+export {
   createTaskTool,
+  createTaskFromTemplateTool,
+  getTaskTemplatesTool,
   getTaskTool,
   getTasksTool,
   updateTaskTool,
@@ -64,6 +66,8 @@ export {
 export {
   // Single task operation handlers
   createTaskHandler,
+  createTaskFromTemplateHandler,
+  getTaskTemplatesHandler,
   getTaskHandler,
   getTasksHandler,
   updateTaskHandler,
@@ -72,13 +76,13 @@ export {
   deleteTaskHandler,
   getTaskCommentsHandler,
   createTaskCommentHandler,
-  
+
   // Bulk task operation handlers
   createBulkTasksHandler,
   updateBulkTasksHandler,
   moveBulkTasksHandler,
   deleteBulkTasksHandler,
-  
+
   // Team task operation handlers
   getWorkspaceTasksHandler
 } from './handlers.js';

@@ -621,6 +621,26 @@ export async function createTaskHandler(params) {
   return await taskService.createTask(listId, taskData);
 }
 
+/**
+ * Handler for creating a task from template
+ */
+export async function createTaskFromTemplateHandler(params) {
+  const { templateId, name } = params;
+
+  if (!templateId) throw new Error("Template ID is required");
+
+  const listId = await getListId(params.listId, params.listName);
+
+  return await taskService.createTaskFromTemplate(listId, templateId, name);
+}
+
+/**
+ * Handler for getting task templates
+ */
+export async function getTaskTemplatesHandler() {
+  return await taskService.getTaskTemplates();
+}
+
 
 
 /**

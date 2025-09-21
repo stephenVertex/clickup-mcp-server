@@ -50,6 +50,33 @@ export interface ClickUpPriority {
 export type DependencyType = 0 | 1;
 
 /**
+ * Task Template as returned by the ClickUp API
+ */
+export interface ClickUpTaskTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  space_id: string;
+  team_id: string;
+  date_created: string;
+  date_updated: string;
+  creator: {
+    id: number;
+    username: string;
+    email: string;
+    color: string;
+    profilePicture?: string;
+  };
+}
+
+/**
+ * Response from get task templates API
+ */
+export interface TaskTemplatesResponse {
+  templates: ClickUpTaskTemplate[];
+}
+
+/**
  * Task dependency object
  */
 export interface ClickUpDependency {
