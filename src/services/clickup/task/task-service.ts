@@ -16,6 +16,7 @@ import { TaskServiceAttachments } from './task-attachments.js';
 import { TaskServiceComments } from './task-comments.js';
 import { TaskServiceTags } from './task-tags.js';
 import { TaskServiceCustomFields } from './task-custom-fields.js';
+import { TaskDependenciesService } from './task-dependencies.js';
 import { WorkspaceService } from '../workspace.js';
 import {
   ClickUpTask,
@@ -25,7 +26,9 @@ import {
   ClickUpTaskAttachment,
   ExtendedTaskFilters,
   DetailedTaskResponse,
-  WorkspaceTasksResponse
+  WorkspaceTasksResponse,
+  ClickUpDependency,
+  DependencyType
 } from '../types.js';
 import { CustomFieldValue } from './task-custom-fields.js';
 
@@ -42,6 +45,7 @@ export class TaskService extends TaskServiceCore {
   public readonly comments: TaskServiceComments;
   public readonly tags: TaskServiceTags;
   public readonly customFields: TaskServiceCustomFields;
+  public readonly dependencies: TaskDependenciesService;
 
   constructor(apiKey: string, teamId: string, baseUrl?: string, workspaceService?: WorkspaceService) {
     super(apiKey, teamId, baseUrl, workspaceService);
@@ -53,6 +57,7 @@ export class TaskService extends TaskServiceCore {
     this.comments = new TaskServiceComments(this);
     this.tags = new TaskServiceTags(this);
     this.customFields = new TaskServiceCustomFields(this);
+    this.dependencies = new TaskDependenciesService(this.client);
   }
 
   // ===== DELEGATED SEARCH METHODS =====
@@ -140,6 +145,24 @@ export class TaskService extends TaskServiceCore {
 
   async updateTaskTags(taskId: string, tagNames: string[]): Promise<boolean> {
     return this.tags.updateTaskTags(taskId, tagNames);
+  }
+
+  // ===== DELEGATED DEPENDENCY METHODS =====
+
+  async addDependency(taskId: string, dependsOn: string, type: DependencyType = 0): Promise<ClickUpDependency> {
+    return this.dependencies.addDependency(taskId, dependsOn, type);
+  }
+
+  async removeDependency(taskId: string, dependsOn: string, type: DependencyType = 0): Promise<void> {
+    return this.dependencies.removeDependency(taskId, dependsOn, type);
+  }
+
+  async addLinkedTask(taskId: string, linkedTaskId: string): Promise<any> {
+    return this.dependencies.addLinkedTask(taskId, linkedTaskId);
+  }
+
+  async removeLinkedTask(taskId: string, linkedTaskId: string): Promise<void> {
+    return this.dependencies.removeLinkedTask(taskId, linkedTaskId);
   }
 
   // ===== DELEGATED CUSTOM FIELD METHODS =====

@@ -43,6 +43,37 @@ export interface ClickUpPriority {
 }
 
 /**
+ * Dependency types
+ * 0 = waiting on
+ * 1 = blocking
+ */
+export type DependencyType = 0 | 1;
+
+/**
+ * Task dependency object
+ */
+export interface ClickUpDependency {
+  task_id: string;
+  depends_on?: string;
+  type: DependencyType;
+  date_created?: string;
+  userid?: string;
+  workspace_id?: string;
+  chain_id?: string | null;
+}
+
+/**
+ * Linked task object
+ */
+export interface ClickUpLinkedTask {
+  task_id: string;
+  link_id: string;
+  date_created: string;
+  userid: string;
+  workspace_id?: string;
+}
+
+/**
  * Status object as returned by the ClickUp API
  */
 export interface ClickUpStatus {
@@ -200,8 +231,8 @@ export interface ClickUpTask {
   time_estimate: number | null;
   time_spent: number | null;
   custom_fields: Record<string, any>;
-  dependencies: string[];
-  linked_tasks: string[];
+  dependencies: ClickUpDependency[];
+  linked_tasks: ClickUpLinkedTask[];
   team_id: string;
   list: {
     id: string;

@@ -85,6 +85,11 @@ import {
   createDocumentPageTool, handleCreateDocumentPage,
   updateDocumentPageTool, handleUpdateDocumentPage
 } from "./tools/documents.js";
+import {
+  addTaskDependencyTool, handleAddTaskDependency,
+  removeTaskDependencyTool, handleRemoveTaskDependency,
+  getTaskDependenciesTool, handleGetTaskDependencies
+} from "./tools/dependency.js";
 
 import {
   getWorkspaceMembersTool, handleGetWorkspaceMembers,
@@ -204,6 +209,9 @@ export function configureServer() {
         getWorkspaceMembersTool,
         findMemberByNameTool,
         resolveAssigneesTool,
+        addTaskDependencyTool,
+        removeTaskDependencyTool,
+        getTaskDependenciesTool,
         ...documentModule()
       ].filter(tool => isToolEnabled(tool.name))
     };
@@ -217,8 +225,8 @@ export function configureServer() {
 
   // Register CallTool handler with proper logging
   logger.info("Registering tool handlers", {
-    toolCount: 36,
-    categories: ["workspace", "task", "time-tracking", "list", "folder", "tag", "member", "document"]
+    toolCount: 39,
+    categories: ["workspace", "task", "time-tracking", "list", "folder", "tag", "member", "document", "dependency"]
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (req) => {
@@ -330,6 +338,12 @@ export function configureServer() {
           return handleFindMemberByName(params);
         case "resolve_assignees":
           return handleResolveAssignees(params);
+        case "add_task_dependency":
+          return handleAddTaskDependency(params);
+        case "remove_task_dependency":
+          return handleRemoveTaskDependency(params);
+        case "get_task_dependencies":
+          return handleGetTaskDependencies(params);
         default:
           logger.error(`Unknown tool requested: ${name}`);
           const error = new Error(`Unknown tool: ${name}`);
