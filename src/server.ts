@@ -32,6 +32,7 @@ import {
   deleteBulkTasksTool,
   attachTaskFileTool,
   getWorkspaceTasksTool,
+  getTasksWithCustomFieldFilterTool,
   getTaskTimeEntriesTool,
   startTimeTrackingTool,
   stopTimeTrackingTool,
@@ -45,6 +46,7 @@ import {
   handleMoveTask,
   handleDuplicateTask,
   handleGetTasks,
+  handleGetTasksWithCustomFieldFilter,
   handleDeleteTask,
   handleGetTaskComments,
   handleCreateTaskComment,
@@ -67,7 +69,9 @@ import {
   createListInFolderTool, handleCreateListInFolder,
   getListTool, handleGetList,
   updateListTool, handleUpdateList,
-  deleteListTool, handleDeleteList
+  deleteListTool, handleDeleteList,
+  getCustomFieldsTool, handleGetCustomFields,
+  getCustomFieldByNameTool, handleGetCustomFieldByName
 } from "./tools/list.js";
 import {
   createFolderTool, handleCreateFolder,
@@ -194,6 +198,7 @@ export function configureServer() {
         moveBulkTasksTool,
         deleteBulkTasksTool,
         getWorkspaceTasksTool,
+        getTasksWithCustomFieldFilterTool,
         getTaskTimeEntriesTool,
         startTimeTrackingTool,
         stopTimeTrackingTool,
@@ -205,6 +210,8 @@ export function configureServer() {
         getListTool,
         updateListTool,
         deleteListTool,
+        getCustomFieldsTool,
+        getCustomFieldByNameTool,
         createFolderTool,
         getFolderTool,
         updateFolderTool,
@@ -292,6 +299,8 @@ export function configureServer() {
           return handleDeleteBulkTasks(params);
         case "get_workspace_tasks":
           return handleGetWorkspaceTasks(params);
+        case "get_tasks_with_custom_field_filter":
+          return handleGetTasksWithCustomFieldFilter(params);
         case "create_list":
           return handleCreateList(params);
         case "create_list_in_folder":
@@ -302,6 +311,10 @@ export function configureServer() {
           return handleUpdateList(params);
         case "delete_list":
           return handleDeleteList(params);
+        case "get_custom_fields":
+          return handleGetCustomFields(params);
+        case "get_custom_field_by_name":
+          return handleGetCustomFieldByName(params);
         case "create_folder":
           return handleCreateFolder(params);
         case "get_folder":

@@ -221,16 +221,34 @@ export class ListService extends BaseClickUpService {
    */
   async findListByNameInFolder(folderId: string, listName: string): Promise<ClickUpList | null> {
     this.logOperation('findListByNameInFolder', { folderId, listName });
-    
+
     try {
       const lists = await this.getListsInFolder(folderId);
-      const matchingList = lists.find(list => 
+      const matchingList = lists.find(list =>
         list.name.toLowerCase() === listName.toLowerCase()
       );
-      
+
       return matchingList || null;
     } catch (error) {
       throw this.handleError(error, `Failed to find list by name in folder ${folderId}`);
+    }
+  }
+
+  /**
+   * Get custom fields for a list
+   * @param listId The ID of the list to get custom fields for
+   * @returns Array of custom field definitions
+   */
+  async getCustomFields(listId: string): Promise<any[]> {
+    this.logOperation('getCustomFields', { listId });
+
+    try {
+      return await this.makeRequest(async () => {
+        const response = await this.client.get<{ fields: any[] }>(`/list/${listId}/field`);
+        return response.data.fields || [];
+      });
+    } catch (error) {
+      throw this.handleError(error, `Failed to get custom fields for list ${listId}`);
     }
   }
 } 

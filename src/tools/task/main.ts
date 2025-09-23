@@ -15,6 +15,7 @@ import {
   createTaskTool,
   getTaskTool,
   getTasksTool,
+  getTasksWithCustomFieldFilterTool,
   updateTaskTool,
   moveTaskTool,
   duplicateTaskTool,
@@ -51,6 +52,7 @@ import {
   getTaskTemplatesHandler,
   getTaskHandler,
   getTasksHandler,
+  getTasksWithCustomFieldFilterHandler,
   updateTaskHandler,
   moveTaskHandler,
   duplicateTaskHandler,
@@ -107,6 +109,12 @@ export const handleGetTask = createHandlerWrapper(getTaskHandler);
 export const handleGetTasks = createHandlerWrapper(getTasksHandler, (tasks) => ({
   tasks,
   count: tasks.length
+}));
+
+export const handleGetTasksWithCustomFieldFilter = createHandlerWrapper(getTasksWithCustomFieldFilterHandler, (tasks) => ({
+  tasks,
+  count: tasks.length,
+  message: `Found ${tasks.length} task(s) matching the custom field filters`
 }));
 
 /**

@@ -449,6 +449,81 @@ Notes:
 };
 
 /**
+ * Tool definition for retrieving tasks with custom field filtering
+ */
+export const getTasksWithCustomFieldFilterTool = {
+  name: "get_tasks_with_custom_field_filter",
+  description: `Retrieves tasks from a ClickUp list filtered by custom field values. Use listId (preferred) or listName + custom_field array. For dropdown fields, use option ID not display name. Get field definitions with get_custom_fields tool first.`,
+  inputSchema: {
+    type: "object",
+    properties: {
+      listId: {
+        type: "string",
+        description: "ID of the list to get tasks from (preferred). Use this instead of listName if you have it."
+      },
+      listName: {
+        type: "string",
+        description: "Name of the list to get tasks from. Only use if you don't have listId."
+      },
+      custom_field: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            field_id: {
+              type: "string",
+              description: "ID of the custom field to filter by"
+            },
+            operator: {
+              type: "string",
+              enum: ["=", "!=", ">", "<", ">=", "<="],
+              description: "Comparison operator for the filter"
+            },
+            value: {
+              type: "string",
+              description: "Value to filter by. For dropdown fields, use the option ID (not display name). For other types, use string representation."
+            }
+          },
+          required: ["field_id", "operator", "value"]
+        },
+        description: "Array of custom field filters. Example: [{\"field_id\":\"1c832084-6c40-4e33-a162-f35bb93c07e6\",\"operator\":\"=\",\"value\":\"ab03e1a0-9aee-4e4a-a46b-4c5de18d5e8e\"}]"
+      },
+      archived: {
+        type: "boolean",
+        description: "Include archived tasks (default: false)"
+      },
+      subtasks: {
+        type: "boolean",
+        description: "Include subtasks (default: true)"
+      },
+      statuses: {
+        type: "array",
+        items: { type: "string" },
+        description: "Filter by status names (e.g. ['To Do', 'In Progress'])"
+      },
+      assignees: {
+        type: "array",
+        items: { type: "number" },
+        description: "Filter by assignee user IDs"
+      },
+      page: {
+        type: "number",
+        description: "Page number for pagination (starts at 0)"
+      },
+      order_by: {
+        type: "string",
+        description: "Sort field: due_date, created, updated"
+      },
+      reverse: {
+        type: "boolean",
+        description: "Reverse sort order (descending)"
+      }
+    },
+    required: ["custom_field"]
+  }
+};
+
+/**
  * Tool definition for retrieving task comments
  */
 export const getTaskCommentsTool = {
