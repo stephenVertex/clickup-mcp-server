@@ -710,6 +710,39 @@ export async function getTasksHandler(params) {
 }
 
 /**
+ * Handler for getting tasks with custom field filtering
+ */
+export async function getTasksWithCustomFieldFilterHandler(params) {
+  if (!params.custom_field || !Array.isArray(params.custom_field) || params.custom_field.length === 0) {
+    throw new Error('custom_field array is required and must contain at least one filter');
+  }
+
+  // Validate custom field filter format
+  for (const filter of params.custom_field) {
+    if (!filter.field_id || !filter.operator || filter.value === undefined) {
+      throw new Error('Each custom field filter must have field_id, operator, and value');
+    }
+    if (!['=', '!=', '>', '<', '>=', '<='].includes(filter.operator)) {
+      throw new Error('Invalid operator. Must be one of: =, !=, >, <, >=, <=');
+    }
+  }
+
+  const listId = await getListId(params.listId, params.listName);
+
+  // Build additional filters
+  const additionalFilters: any = {};
+  if (params.archived !== undefined) additionalFilters.archived = params.archived;
+  if (params.subtasks !== undefined) additionalFilters.subtasks = params.subtasks;
+  if (params.statuses !== undefined) additionalFilters.statuses = params.statuses;
+  if (params.assignees !== undefined) additionalFilters.assignees = params.assignees;
+  if (params.page !== undefined) additionalFilters.page = params.page;
+  if (params.order_by !== undefined) additionalFilters.order_by = params.order_by;
+  if (params.reverse !== undefined) additionalFilters.reverse = params.reverse;
+
+  return await taskService.getTasksWithCustomFieldFilter(listId, params.custom_field, additionalFilters);
+}
+
+/**
  * Handler for getting task comments
  */
 export async function getTaskCommentsHandler(params) {

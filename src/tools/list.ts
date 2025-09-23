@@ -184,6 +184,28 @@ export const deleteListTool = {
 };
 
 /**
+ * Tool definition for getting custom fields for a list
+ */
+export const getCustomFieldsTool = {
+  name: "get_custom_fields",
+  description: `Retrieves all custom field definitions for a ClickUp list. Use listId (preferred) or listName. Returns field definitions including ID, name, type, and possible values for dropdown fields.`,
+  inputSchema: {
+    type: "object",
+    properties: {
+      listId: {
+        type: "string",
+        description: "ID of the list to get custom fields for. Use this instead of listName if you have the ID."
+      },
+      listName: {
+        type: "string",
+        description: "Name of the list to get custom fields for. May be ambiguous if multiple lists have the same name."
+      }
+    },
+    required: []
+  }
+};
+
+/**
  * Helper function to find a list ID by name
  * Uses the ClickUp service's global list search functionality
  */
@@ -431,9 +453,9 @@ export async function handleUpdateList(parameters: any) {
  */
 export async function handleDeleteList(parameters: any) {
   const { listId, listName } = parameters;
-  
+
   let targetListId = listId;
-  
+
   // If no listId provided but listName is, look up the list ID
   if (!targetListId && listName) {
     const listResult = await findListIDByName(workspaceService, listName);
@@ -442,7 +464,7 @@ export async function handleDeleteList(parameters: any) {
     }
     targetListId = listResult.id;
   }
-  
+
   if (!targetListId) {
     throw new Error("Either listId or listName must be provided");
   }
@@ -451,15 +473,132 @@ export async function handleDeleteList(parameters: any) {
     // Get list details before deletion for confirmation message
     const list = await listService.getList(targetListId);
     const listName = list.name;
-    
+
     // Delete the list
     await listService.deleteList(targetListId);
-    
+
     return sponsorService.createResponse({
       success: true,
       message: `List "${listName || targetListId}" deleted successfully`
     }, true);
   } catch (error: any) {
     return sponsorService.createErrorResponse(`Failed to delete list: ${error.message}`);
+  }
+}
+
+/**
+ * Tool definition for getting a specific custom field by name for a list
+ */
+export const getCustomFieldByNameTool = {
+  name: "get_custom_field_by_name",
+  description: `Retrieves a specific custom field definition by name for a ClickUp list. More economical than get_custom_fields when you only need one field. Returns simplified format with field name, ID, type, and values (for dropdown fields).`,
+  inputSchema: {
+    type: "object",
+    properties: {
+      listId: {
+        type: "string",
+        description: "ID of the list to get the custom field from. Use this instead of listName if you have the ID."
+      },
+      listName: {
+        type: "string",
+        description: "Name of the list to get the custom field from. May be ambiguous if multiple lists have the same name."
+      },
+      fieldName: {
+        type: "string",
+        description: "Name of the custom field to retrieve (case-sensitive)"
+      }
+    },
+    required: ["fieldName"]
+  }
+};
+
+/**
+ * Handler for the get_custom_field_by_name tool
+ * Retrieves a specific custom field by name from a list
+ */
+export async function handleGetCustomFieldByName(parameters: any) {
+  const { listId, listName, fieldName } = parameters;
+
+  let targetListId = listId;
+
+  // If no listId provided but listName is, look up the list ID
+  if (!targetListId && listName) {
+    const listResult = await findListIDByName(workspaceService, listName);
+    if (!listResult) {
+      throw new Error(`List "${listName}" not found`);
+    }
+    targetListId = listResult.id;
+  }
+
+  if (!targetListId) {
+    throw new Error("Either listId or listName must be provided");
+  }
+
+  try {
+    // Get all custom fields for the list
+    const customFields = await listService.getCustomFields(targetListId);
+
+    // Find the specific field by name
+    const field = customFields.find(f => f.name === fieldName);
+
+    if (!field) {
+      return sponsorService.createErrorResponse(`Custom field "${fieldName}" not found in list`);
+    }
+
+    // Build simplified response format
+    const response: any = {
+      field_name: field.name,
+      field_id: field.id,
+      type: field.type
+    };
+
+    // Add values for dropdown fields
+    if (field.type === 'drop_down' && field.type_config?.options) {
+      response.values = {};
+      field.type_config.options.forEach((option: any) => {
+        response.values[option.name] = option.id;
+      });
+    }
+
+    return sponsorService.createResponse(response, true);
+  } catch (error: any) {
+    return sponsorService.createErrorResponse(`Failed to retrieve custom field: ${error.message}`);
+  }
+}
+
+/**
+ * Handler for the get_custom_fields tool
+ * Retrieves custom field definitions for a specific list
+ */
+export async function handleGetCustomFields(parameters: any) {
+  const { listId, listName } = parameters;
+
+  let targetListId = listId;
+
+  // If no listId provided but listName is, look up the list ID
+  if (!targetListId && listName) {
+    const listResult = await findListIDByName(workspaceService, listName);
+    if (!listResult) {
+      throw new Error(`List "${listName}" not found`);
+    }
+    targetListId = listResult.id;
+  }
+
+  if (!targetListId) {
+    throw new Error("Either listId or listName must be provided");
+  }
+
+  try {
+    // Get the custom fields for the list
+    const customFields = await listService.getCustomFields(targetListId);
+
+    return sponsorService.createResponse({
+      listId: targetListId,
+      customFields: customFields,
+      fieldCount: customFields.length,
+      message: `Retrieved ${customFields.length} custom field(s) for list`
+    }, true);
+  } catch (error: any) {
+    return sponsorService.createErrorResponse(`Failed to retrieve custom fields: ${error.message}`);
   }
 } 

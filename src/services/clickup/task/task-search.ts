@@ -997,10 +997,121 @@ export class TaskServiceSearch {
   }
 
   /**
+   * Get tasks from a list with custom field filtering
+   * @param listId The ID of the list to get tasks from
+   * @param customFieldFilters Array of custom field filters in format [{"field_id": "abc", "operator": "=", "value": "xyz"}]
+   * @param additionalFilters Optional additional filters (archived, subtasks, etc.)
+   * @returns Array of ClickUpTask objects that match the filters
+   */
+  async getTasksWithCustomFieldFilter(
+    listId: string,
+    customFieldFilters: Array<{field_id: string, operator: string, value: string}>,
+    additionalFilters: ExtendedTaskFilters = {}
+  ): Promise<ClickUpTask[]> {
+    (this.core as any).logOperation('getTasksWithCustomFieldFilter', {
+      listId,
+      customFieldFilters,
+      additionalFilters
+    });
+
+    try {
+      // Convert custom field filters to the format expected by ClickUp API
+      const customFieldsParam = JSON.stringify(customFieldFilters);
+
+      // Build parameters for the API call
+      const params: Record<string, any> = {
+        custom_fields: customFieldsParam,
+        archived: additionalFilters.archived !== undefined ? additionalFilters.archived : false,
+        include_markdown_description: true,
+        subtasks: additionalFilters.subtasks !== undefined ? additionalFilters.subtasks : true,
+        page: additionalFilters.page || 0
+      };
+
+      // Add additional filters if provided
+      if (additionalFilters.statuses && additionalFilters.statuses.length > 0) {
+        params.statuses = additionalFilters.statuses;
+      }
+      if (additionalFilters.assignees && additionalFilters.assignees.length > 0) {
+        params.assignees = additionalFilters.assignees;
+      }
+      if (additionalFilters.order_by) {
+        params.order_by = additionalFilters.order_by;
+      }
+      if (additionalFilters.reverse !== undefined) {
+        params.reverse = additionalFilters.reverse;
+      }
+
+      let allTasks: ClickUpTask[] = [];
+      let currentPage = additionalFilters.page || 0;
+      let hasMore = true;
+      const maxPages = 50; // Safety limit to prevent infinite loops
+      let pageCount = 0;
+
+      // Paginate through all results
+      while (hasMore && pageCount < maxPages) {
+        const pageParams = { ...params, page: currentPage };
+
+        const response = await (this.core as any).makeRequest(async () => {
+          return await (this.core as any).client.get(`/list/${listId}/task`, {
+            params: pageParams
+          });
+        });
+
+        const tasks = response.data.tasks || [];
+        allTasks = allTasks.concat(tasks);
+
+        // Check if there are more pages
+        hasMore = tasks.length > 0 && tasks.length >= 100; // ClickUp returns max 100 tasks per page
+        currentPage++;
+        pageCount++;
+
+        (this.core as any).logOperation('getTasksWithCustomFieldFilter', {
+          listId,
+          page: currentPage - 1,
+          tasksInPage: tasks.length,
+          totalTasksSoFar: allTasks.length,
+          hasMore
+        });
+
+        // If we're not paginating (original request had no page specified),
+        // only get the first page unless there are exactly 100 tasks (indicating more pages)
+        if (additionalFilters.page === undefined && (tasks.length < 100 || currentPage >= 10)) {
+          break;
+        }
+      }
+
+      if (pageCount >= maxPages) {
+        (this.core as any).logOperation('getTasksWithCustomFieldFilter', {
+          listId,
+          warning: `Reached maximum page limit (${maxPages}) while fetching tasks`,
+          totalTasks: allTasks.length
+        });
+      }
+
+      (this.core as any).logOperation('getTasksWithCustomFieldFilter', {
+        listId,
+        customFieldFiltersCount: customFieldFilters.length,
+        totalTasks: allTasks.length,
+        totalPages: pageCount
+      });
+
+      return allTasks;
+
+    } catch (error) {
+      (this.core as any).logOperation('getTasksWithCustomFieldFilter', {
+        listId,
+        error: error.message,
+        status: error.response?.status
+      });
+      throw (this.core as any).handleError(error, `Failed to get tasks with custom field filter from list ${listId}`);
+    }
+  }
+
+  /**
    * Global task search by name across all lists
    * This is a specialized method that uses getWorkspaceTasks to search all lists at once
    * which is more efficient than searching list by list
-   * 
+   *
    * @param taskName The name to search for
    * @returns The best matching task or null if no match found
    */

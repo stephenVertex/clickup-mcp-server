@@ -109,6 +109,14 @@ export class TaskService extends TaskServiceCore {
     return this.search.findTasks(params);
   }
 
+  async getTasksWithCustomFieldFilter(
+    listId: string,
+    customFieldFilters: Array<{field_id: string, operator: string, value: string}>,
+    additionalFilters: ExtendedTaskFilters = {}
+  ): Promise<ClickUpTask[]> {
+    return this.search.getTasksWithCustomFieldFilter(listId, customFieldFilters, additionalFilters);
+  }
+
   // ===== DELEGATED ATTACHMENT METHODS =====
 
   async uploadTaskAttachment(taskId: string, fileData: Buffer, fileName: string): Promise<ClickUpTaskAttachment> {
