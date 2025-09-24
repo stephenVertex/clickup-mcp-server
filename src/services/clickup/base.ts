@@ -13,6 +13,7 @@
 
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { Logger, LogLevel } from '../../logger.js';
+import config from '../../config.js';
 
 /**
  * Basic service response interface
@@ -102,14 +103,15 @@ export class BaseClickUpService {
   protected readonly teamId: string;
   protected readonly client: AxiosInstance;
   protected readonly logger: Logger;
-  
-  protected readonly defaultRequestSpacing = 600; // Default milliseconds between requests
-  protected readonly rateLimit = 100; // Maximum requests per minute (Free Forever plan)
-  protected requestSpacing: number; // Current request spacing, can be adjusted
-  protected readonly timeout = 65000; // 65 seconds (safely under the 1-minute window)
+
+  protected readonly rateLimit: number;
+  protected readonly defaultRequestSpacing: number;
+  protected requestSpacing: number;
+  protected readonly timeout = 65000;
   protected requestQueue: (() => Promise<any>)[] = [];
   protected processingQueue = false;
   protected lastRateLimitReset: number = 0;
+  protected requestTimestamps: number[] = [];
 
   /**
    * Creates an instance of BaseClickUpService.
@@ -120,6 +122,8 @@ export class BaseClickUpService {
   constructor(apiKey: string, teamId: string, baseUrl: string = 'https://api.clickup.com/api/v2') {
     this.apiKey = apiKey;
     this.teamId = teamId;
+    this.rateLimit = config.rateLimitPerMinute;
+    this.defaultRequestSpacing = Math.ceil(60000 / this.rateLimit);
     this.requestSpacing = this.defaultRequestSpacing;
     
     // Create a logger with the actual class name for better context
@@ -154,7 +158,7 @@ export class BaseClickUpService {
     // Add response interceptor for error handling
     this.client.interceptors.response.use(
       response => response,
-      error => this.handleAxiosError(error)
+      async error => await this.handleAxiosError(error)
     );
   }
 
@@ -164,13 +168,13 @@ export class BaseClickUpService {
    * @param error Error from Axios
    * @returns Never - always throws an error
    */
-  private handleAxiosError(error: any): never {
+  private async handleAxiosError(error: any): Promise<never> {
     // Determine error details
     const status = error.response?.status;
     const responseData = error.response?.data;
     const errorMsg = responseData?.err || responseData?.error || error.message || 'Unknown API error';
     const path = error.config?.url || 'unknown path';
-    
+
     // Context object for providing more detailed log information
     const errorContext: {
       path: string;
@@ -206,27 +210,39 @@ export class BaseClickUpService {
     } else if (status === 429) {
       code = ErrorCode.RATE_LIMIT;
       this.handleRateLimitHeaders(error.response.headers);
-      
+
       // Calculate time until reset
       const reset = error.response.headers['x-ratelimit-reset'];
-      const now = Date.now() / 1000; // Convert to seconds
+      const now = Date.now() / 1000;
       const timeToReset = Math.max(0, reset - now);
       const resetMinutes = Math.ceil(timeToReset / 60);
-      
+
       logMessage = `Rate limit exceeded for ${path}`;
-      errorMessage = `Rate limit exceeded. Please wait ${resetMinutes} minute${resetMinutes === 1 ? '' : 's'} before trying again.`;
-      
-      // Add more context to the error
+      errorMessage = `Rate limit exceeded. Waiting 60 seconds before retrying...`;
+
       errorContext.rateLimitInfo = {
         limit: error.response.headers['x-ratelimit-limit'],
         remaining: error.response.headers['x-ratelimit-remaining'],
         reset: reset,
         timeToReset: timeToReset
       };
+
+      this.logger.error(logMessage, errorContext);
+
+      this.logger.warn('Pausing for 60 seconds due to rate limit...');
+      await new Promise(resolve => setTimeout(resolve, 60000));
+
+      throw new ClickUpServiceError(errorMessage, code, error);
     } else if (status === 401 || status === 403) {
       code = ErrorCode.UNAUTHORIZED;
       logMessage = `Authorization failed for ${path}`;
-      errorMessage = 'Authorization failed. Please check your API key.';
+      errorMessage = 'Authorization failed. Please check your API key and permissions.';
+
+      if (errorMsg.toLowerCase().includes('rate limit') || errorMsg.toLowerCase().includes('api key not authorized')) {
+        this.logger.error(`${logMessage} - possible rate limit issue`, errorContext);
+        this.logger.warn('Pausing for 60 seconds due to possible rate limit...');
+        await new Promise(resolve => setTimeout(resolve, 60000));
+      }
     } else if (status === 404) {
       code = ErrorCode.NOT_FOUND;
       logMessage = `Resource not found: ${path}`;
@@ -384,11 +400,23 @@ export class BaseClickUpService {
    * @returns Promise that resolves with the result of the API request
    */
   protected async makeRequest<T>(fn: () => Promise<T>): Promise<T> {
-    // If we're being rate limited, queue the request rather than executing immediately
+    this.cleanupOldTimestamps();
+
+    if (this.requestTimestamps.length >= this.rateLimit) {
+      const oldestTimestamp = this.requestTimestamps[0];
+      const timeToWait = 60000 - (Date.now() - oldestTimestamp);
+
+      if (timeToWait > 0) {
+        this.logger.warn(`Rate limit reached (${this.requestTimestamps.length}/${this.rateLimit} requests per minute). Waiting ${Math.ceil(timeToWait / 1000)} seconds...`);
+        await new Promise(resolve => setTimeout(resolve, timeToWait));
+        this.cleanupOldTimestamps();
+      }
+    }
+
     if (this.processingQueue) {
       const queuePosition = this.requestQueue.length + 1;
       const estimatedWaitTime = Math.ceil((queuePosition * this.requestSpacing) / 1000);
-      
+
       this.logger.info('Request queued due to rate limiting', {
         queuePosition,
         estimatedWaitSeconds: estimatedWaitTime,
@@ -401,7 +429,6 @@ export class BaseClickUpService {
             const result = await fn();
             resolve(result);
           } catch (error) {
-            // Enhance error message with queue context if it's a rate limit error
             if (error instanceof ClickUpServiceError && error.code === ErrorCode.RATE_LIMIT) {
               const enhancedError = new ClickUpServiceError(
                 `${error.message} (Request was queued at position ${queuePosition})`,
@@ -417,15 +444,12 @@ export class BaseClickUpService {
       });
     }
 
-    // Track request metadata
     let requestMethod = 'unknown';
     let requestPath = 'unknown';
     let requestData: any = undefined;
 
-    // Set up interceptor to capture request details
     const requestInterceptorId = this.client.interceptors.request.use(
       (config) => {
-        // Capture request metadata
         requestMethod = config.method?.toUpperCase() || 'unknown';
         requestPath = config.url || 'unknown';
         requestData = config.data;
@@ -435,27 +459,26 @@ export class BaseClickUpService {
 
     const startTime = Date.now();
     try {
-      // Execute the request function
       const result = await fn();
-      
-      // Debug log for successful requests with timing information
+
+      this.requestTimestamps.push(Date.now());
+
       const duration = Date.now() - startTime;
-      this.logger.debug(`Request completed successfully in ${duration}ms`, {
+      this.logger.debug(`Request completed successfully in ${duration}ms (${this.requestTimestamps.length}/${this.rateLimit} requests in current minute)`, {
         method: requestMethod,
         path: requestPath,
         duration,
         responseType: result ? typeof result : 'undefined'
       });
-      
+
       return result;
     } catch (error) {
-      // If we hit a rate limit, start processing the queue
       if (error instanceof ClickUpServiceError && error.code === ErrorCode.RATE_LIMIT) {
         this.logger.warn('Rate limit reached, switching to queue mode', {
           reset: this.lastRateLimitReset,
           queueLength: this.requestQueue.length
         });
-        
+
         if (!this.processingQueue) {
           this.processingQueue = true;
           this.processQueue().catch(err => {
@@ -463,7 +486,6 @@ export class BaseClickUpService {
           });
         }
 
-        // Queue this failed request and return a promise that will resolve when it's retried
         return new Promise<T>((resolve, reject) => {
           this.requestQueue.push(async () => {
             try {
@@ -476,12 +498,15 @@ export class BaseClickUpService {
         });
       }
 
-      // For other errors, just throw
       throw error;
     } finally {
-      // Always remove the interceptor
       this.client.interceptors.request.eject(requestInterceptorId);
     }
+  }
+
+  private cleanupOldTimestamps(): void {
+    const oneMinuteAgo = Date.now() - 60000;
+    this.requestTimestamps = this.requestTimestamps.filter(ts => ts > oneMinuteAgo);
   }
 
   /**
