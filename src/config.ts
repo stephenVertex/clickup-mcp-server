@@ -38,6 +38,7 @@ for (let i = 0; i < args.length; i++) {
     if (key === 'SSE_PORT') envArgs.ssePort = value;
     if (key === 'ENABLE_STDIO') envArgs.enableStdio = value;
     if (key === 'PORT') envArgs.port = value;
+    if (key === 'RATE_LIMIT_PER_MINUTE') envArgs.rateLimitPerMinute = value;
     i++;
   }
 }
@@ -95,6 +96,8 @@ interface Config {
   sslKeyPath?: string;
   sslCertPath?: string;
   sslCaPath?: string;
+  // ClickUp API rate limiting
+  rateLimitPerMinute: number;
 }
 
 // Parse boolean string
@@ -157,6 +160,8 @@ const configuration: Config = {
   sslKeyPath: process.env.SSL_KEY_PATH,
   sslCertPath: process.env.SSL_CERT_PATH,
   sslCaPath: process.env.SSL_CA_PATH,
+  // ClickUp API rate limiting
+  rateLimitPerMinute: parseInteger(envArgs.rateLimitPerMinute || process.env.RATE_LIMIT_PER_MINUTE, 100),
 };
 
 // Don't log to console as it interferes with JSON-RPC communication

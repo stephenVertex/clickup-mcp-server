@@ -539,7 +539,7 @@ export class TaskServiceCore extends BaseClickUpService {
           `/task/${taskId}`,
           fieldsToSend
         );
-        
+
         // Handle both JSON and text responses
         const data = response.data;
         if (typeof data === 'string') {
@@ -555,20 +555,81 @@ export class TaskServiceCore extends BaseClickUpService {
             data
           );
         }
-        
+
         return data;
       });
-      
+
       // Then update custom fields if provided
       if (custom_fields && Array.isArray(custom_fields) && custom_fields.length > 0) {
         // Use the setCustomFieldValues method from the inherited class
         // This will be available in TaskServiceCustomFields which extends this class
         await (this as any).setCustomFieldValues(taskId, custom_fields);
-        
+
         // Fetch the task again to get the updated version with custom fields
         return await this.getTask(taskId);
       }
-      
+
+      // Auto-remove dependencies when task is marked as done/closed
+      if (updateData.status) {
+        const statusLower = updateData.status.toLowerCase();
+        if (statusLower === 'done' || statusLower === 'closed' || statusLower === 'complete') {
+          this.logOperation('auto-remove-dependencies', { taskId, status: updateData.status });
+
+          try {
+            const taskWithDeps = await this.getTask(taskId);
+
+            const depsToRemove: Array<{ fromTaskId: string; dependsOn: string }> = [];
+
+            if (taskWithDeps.dependencies) {
+              for (const dep of taskWithDeps.dependencies) {
+                if (dep.type === 1 && dep.depends_on === taskId && dep.task_id) {
+                  depsToRemove.push({ fromTaskId: dep.task_id, dependsOn: taskId });
+                }
+              }
+            }
+
+            if (depsToRemove.length > 0) {
+              this.logOperation('removing-dependencies', {
+                completedTaskId: taskId,
+                count: depsToRemove.length,
+                dependencies: depsToRemove
+              });
+
+              for (const dep of depsToRemove) {
+                try {
+                  await this.makeRequest(async () => {
+                    const queryParams = new URLSearchParams({
+                      depends_on: dep.dependsOn,
+                      dependency_of: dep.fromTaskId
+                    });
+
+                    await this.client.delete(
+                      `/task/${dep.fromTaskId}/dependency?${queryParams.toString()}`
+                    );
+                  });
+
+                  this.logOperation('removed-dependency', {
+                    fromTaskId: dep.fromTaskId,
+                    dependsOn: dep.dependsOn
+                  });
+                } catch (depError) {
+                  this.logOperation('failed-to-remove-dependency', {
+                    fromTaskId: dep.fromTaskId,
+                    dependsOn: dep.dependsOn,
+                    error: depError
+                  });
+                }
+              }
+            }
+          } catch (depsError) {
+            this.logOperation('dependency-removal-error', {
+              taskId,
+              error: depsError
+            });
+          }
+        }
+      }
+
       return updatedTask;
     } catch (error) {
       throw this.handleError(error, `Failed to update task ${taskId}`);

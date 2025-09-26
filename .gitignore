@@ -39,6 +39,11 @@ Thumbs.db
 .specstory
 checklist.md
 
+#Claude
+.claude
+claude.md
+.mcp.json
+
 # Temporary files
 .tmp/
 .temp/
