@@ -1,77 +1,45 @@
 {
-  "name": "@taazkareem/clickup-mcp-server",
-  "version": "0.8.5",
-  "description": "ClickUp MCP Server - Integrate ClickUp tasks with AI through Model Context Protocol",
+  "name": "@mcp/clickup-oauth-server",
+  "version": "1.0.0",
+  "description": "ClickUp MCP Server with OAuth2 authentication",
+  "main": "dist/index.js",
   "type": "module",
-  "main": "build/index.js",
-  "bin": {
-    "clickup-mcp-server": "build/index.js"
-  },
-  "files": [
-    "build",
-    "README.md",
-    "LICENSE",
-    "Dockerfile",
-    "smithery.yaml"
-  ],
   "scripts": {
-    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
-    "start": "node build/index.js",
-    "dev": "tsc -w",
-    "prepare": "npm run build"
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "test": "vitest",
+    "test:unit": "vitest run tests/oauth2-flow.test.ts",
+    "test:e2e": "vitest run tests/e2e/",
+    "test:perf": "vitest run tests/performance.test.ts",
+    "test:claude": "vitest run tests/claude-simulator.test.ts",
+    "test:all": "vitest run",
+    "test:ci": "vitest run --coverage",
+    "test:watch": "vitest watch",
+    "test:automated": "tsx scripts/run-automated-tests.ts",
+    "type-check": "tsc --noEmit"
   },
-  "keywords": [
-    "clickup",
-    "mcp",
-    "ai",
-    "tasks",
-    "project-management",
-    "model-context-protocol",
-    "clickup-server",
-    "clickup-mcp-server",
-    "task-management",
-    "productivity",
-    "automation",
-    "workflow",
-    "team-collaboration",
-    "artificial-intelligence",
-    "project-tracking",
-    "task-tracking",
-    "project-planning",
-    "clickup-integration",
-    "clickup-api",
-    "clickup-automation",
-    "task-organization",
-    "project-organization"
-  ],
-  "author": "Talib Kareem",
+  "keywords": ["mcp", "clickup", "oauth2"],
+  "author": "",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/taazkareem/clickup-mcp-server.git"
-  },
-  "bugs": {
-    "url": "https://github.com/taazkareem/clickup-mcp-server/issues"
-  },
-  "homepage": "https://github.com/taazkareem/clickup-mcp-server#readme",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.11.3",
-    "axios": "^1.6.7",
-    "cors": "^2.8.5",
-    "dotenv": "^16.5.0",
-    "express": "^5.1.0",
-    "zod": "^3.23.8"
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "express": "^4.21.2",
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "pino": "^9.5.0",
+    "pino-pretty": "^13.0.1"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.1",
-    "@types/node": "^20.19.17",
-    "typescript": "^5.3.3"
-  },
-  "engines": {
-    "node": ">=18.0.0 <23.0.0"
-  },
-  "publishConfig": {
-    "access": "public"
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.3",
+    "@types/uuid": "^10.0.0",
+    "typescript": "^5.7.3",
+    "tsx": "^4.19.2",
+    "uuid": "^11.0.5",
+    "vitest": "^2.1.8",
+    "@vitest/coverage-v8": "^2.1.8",
+    "supertest": "^7.0.0",
+    "@types/supertest": "^6.0.2"
   }
 }
