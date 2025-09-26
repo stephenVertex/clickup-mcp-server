@@ -4,7 +4,7 @@ yarn.lock
 
 # Build output
 build/
-dist/
+ 
 out/
 
 # Environment variables
