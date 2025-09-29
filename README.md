@@ -211,7 +211,7 @@ npm run sse-client
 | ⚡ **Integration Features**                                                                                                                                                                                                                                      | 🏗️ **Architecture & Performance**                                                                                                                                                                                                                                        |
 | • Global name or ID-based lookups<br>• Case-insensitive matching<br>• Markdown formatting support<br>• Built-in rate limiting<br>• Error handling and validation<br>• Comprehensive API coverage                                             | • **70% codebase reduction** for improved performance<br>• **Unified architecture** across all transport types<br>• **Zero code duplication**<br>• **HTTP Streamable transport** (MCP Inspector compatible)<br>• **Legacy SSE support** for backwards compatibility |
 
-## Available Tools (36 Total)
+## Available Tools (40 Total)
 
 | Tool                                                               | Description                     | Required Parameters                                                                                                          |
 | ------------------------------------------------------------------ | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -262,6 +262,10 @@ npm run sse-client
 | [get_document_pages](docs/user-guide.md#document-management)       | Get document pages              | `documentId`/`documentName`, `pageIds`                                                                                 |
 | [create_document_pages](docs/user-guide.md#document-management)    | Create a document page          | `workspaceId`/`documentId`, `parent_page_id`/`name`/`sub_title`,`content`/`content_format`                     |
 | [update_document_page](docs/user-guide.md#document-management)     | Update a document page          | `workspaceId`/`documentId`, `name`/`sub_title`,`content`/`content_edit_mode`/`content_format`                  |
+| [datetime_to_timestamp](docs/user-guide.md#datetime-utilities)     | Convert datetime to timestamp   | `datetime`                                                                                                         |
+| [timestamp_to_datetime](docs/user-guide.md#datetime-utilities)     | Convert timestamp to datetime   | `timestamp`                                                                                                        |
+| [datetime_to_seconds_gmt](docs/user-guide.md#datetime-utilities)   | Convert datetime to seconds (deprecated) | `datetime`                                                                                                   |
+| [seconds_gmt_to_datetime](docs/user-guide.md#datetime-utilities)   | Convert seconds to datetime (deprecated) | `seconds`                                                                                                    |
 
 See [full documentation](docs/user-guide.md) for optional parameters and advanced usage.
 

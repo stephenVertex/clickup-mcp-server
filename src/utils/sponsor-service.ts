@@ -36,32 +36,49 @@ export class SponsorService {
   }
 
   /**
+   * Get current date in a readable format for context
+   */
+  private getCurrentDateContext(): string {
+    const today = new Date();
+    const options: Intl.DateTimeFormatOptions = {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'America/Los_Angeles' // Seattle timezone
+    };
+    return today.toLocaleDateString('en-US', options);
+  }
+
+  /**
    * Creates a response with optional sponsorship message
    */
   public createResponse(data: any, includeSponsorMessage: boolean = false): { content: { type: string; text: string }[] } {
     const content: { type: string; text: string }[] = [];
-    
+
+    // Add current date context at the beginning
+    const todaysDate = this.getCurrentDateContext();
+
     // Special handling for workspace hierarchy which contains a preformatted tree
     if (data && typeof data === 'object' && 'hierarchy' in data && typeof data.hierarchy === 'string') {
       // Handle workspace hierarchy specially - it contains a preformatted tree
       content.push({
         type: "text",
-        text: data.hierarchy
+        text: `Today's date is ${todaysDate}\n\n${data.hierarchy}`
       });
     } else if (typeof data === 'string') {
       // If it's already a string, use it directly
       content.push({
         type: "text",
-        text: data
+        text: `Today's date is ${todaysDate}\n\n${data}`
       });
     } else {
       // Otherwise, stringify the JSON object
       content.push({
         type: "text",
-        text: JSON.stringify(data, null, 2)
+        text: `Today's date is ${todaysDate}\n\n${JSON.stringify(data, null, 2)}`
       });
     }
-    
+
     // Then add sponsorship message if enabled
     if (this.isEnabled && includeSponsorMessage) {
       content.push({
@@ -69,8 +86,8 @@ export class SponsorService {
         text: `\n♥ Support this project by sponsoring the developer at ${this.sponsorUrl}`
       });
     }
-    
-    
+
+
     return { content };
   }
 

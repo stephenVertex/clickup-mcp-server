@@ -15,6 +15,7 @@ This document provides detailed information about all available tools, their par
 - [Common Parameters](#common-parameters)
 - [Error Handling](#error-handling)
 - [Member Management Tools](#member-management-tools)
+- [DateTime Utilities](#datetime-utilities)
 
 ## Server Transport Options
 
@@ -84,6 +85,15 @@ For detailed SSE setup instructions, see [SSE Transport Documentation](sse-trans
   - `startDate`: When work on the task should begin
   - Both support natural language expressions (e.g., "now", "today", "tomorrow at 9am")
   - Date ranges can be specified using `start of today` and `end of today`
+- **Custom Field DateTime Values**:
+  - ⚠️ **IMPORTANT**: All datetime values in custom fields (like `RECORDING_DATE`) must be in **milliseconds GMT** format
+  - Use the `datetime_to_timestamp` tool to convert human-readable dates to milliseconds
+  - Use the `timestamp_to_datetime` tool to convert milliseconds back to readable format
+  - Examples:
+    - Convert "March 15, 2025 2:30 PM" → `datetime_to_timestamp({ datetime: "March 15, 2025 2:30 PM" })` → `1742086200000`
+    - Convert `1742086200000` → `timestamp_to_datetime({ timestamp: 1742086200000, timezone: "Pacific Time" })` → readable format
+  - The system automatically detects seconds vs milliseconds based on timestamp magnitude
+  - When setting custom fields: `"custom_fields": [{"id": "field_id", "value": 1742086200000}]`
 - **Global Task Lookup**:
   - Find tasks by name across the entire workspace without specifying a list
   - Smart disambiguation when multiple tasks share the same name
@@ -1505,3 +1515,135 @@ When creating or updating tasks, you can use the `assignees` parameter to assign
 - The member management tools can be used to resolve user references before task creation
 - The server automatically converts non-ID values (emails, usernames) to ClickUp user IDs
 - If a user cannot be found, the assignment will be skipped without causing an error
+
+## DateTime Utilities
+
+The ClickUp MCP Server provides specialized tools for handling datetime conversions, particularly for custom fields that require specific timestamp formats.
+
+### ⚠️ Important: Custom Field DateTime Requirements
+
+**All datetime values in custom fields (like `RECORDING_DATE`, `DUE_DATE`, etc.) must be stored in milliseconds GMT format.** This is a ClickUp API requirement for datetime custom fields.
+
+### Available DateTime Tools
+
+| Tool | Description | Parameters | Purpose |
+|------|-------------|------------|---------|
+| `datetime_to_timestamp` | Convert human-readable datetime to Unix timestamp | `datetime` (string), `output_seconds` (optional boolean) | **Primary tool** for converting dates to storage format |
+| `timestamp_to_datetime` | Convert Unix timestamp to human-readable format | `timestamp` (number), `timezone` (optional string), `force_seconds` (optional boolean) | **Primary tool** for displaying stored dates |
+| `datetime_to_seconds_gmt` | Legacy: Convert datetime to seconds | `datetime` (string) | **Deprecated** - use `datetime_to_timestamp` instead |
+| `seconds_gmt_to_datetime` | Legacy: Convert seconds to datetime | `seconds` (number), `timezone` (optional string) | **Deprecated** - use `timestamp_to_datetime` instead |
+
+### Usage Examples
+
+#### Converting DateTime for Custom Fields
+
+```json
+// Step 1: Convert human-readable date to milliseconds
+{
+  "tool": "datetime_to_timestamp",
+  "parameters": {
+    "datetime": "March 15, 2025 2:30 PM"
+  }
+}
+// Returns: { "timestamp": 1742086200000, "format": "milliseconds" }
+
+// Step 2: Use in task creation/update
+{
+  "tool": "create_task",
+  "parameters": {
+    "name": "Record podcast episode",
+    "listName": "Content Production",
+    "custom_fields": [
+      {
+        "id": "recording_date_field_id",
+        "value": 1742086200000  // Milliseconds from step 1
+      }
+    ]
+  }
+}
+```
+
+#### Reading DateTime from Custom Fields
+
+```json
+// Convert stored milliseconds back to readable format
+{
+  "tool": "timestamp_to_datetime",
+  "parameters": {
+    "timestamp": 1742086200000,
+    "timezone": "Pacific Time"
+  }
+}
+// Returns: "March 15, 2025 at 2:30:00 PM PST"
+```
+
+#### Natural Language Support
+
+The datetime tools support natural language expressions:
+
+```json
+// Examples of supported datetime formats
+{
+  "datetime": "tomorrow 3pm"           // → Next day at 3 PM
+}
+{
+  "datetime": "next Friday at 2:30pm" // → Upcoming Friday
+}
+{
+  "datetime": "in 2 days"            // → Two days from now
+}
+{
+  "datetime": "2025-01-15T14:30:00Z" // → ISO format
+}
+```
+
+#### Automatic Format Detection
+
+The `timestamp_to_datetime` tool automatically detects whether a timestamp is in seconds or milliseconds:
+
+```json
+// Seconds timestamp (< 2,000,000,000)
+{
+  "timestamp": 1742086200,  // Detected as seconds
+  "timezone": "UTC"
+}
+
+// Milliseconds timestamp (≥ 2,000,000,000)
+{
+  "timestamp": 1742086200000,  // Detected as milliseconds
+  "timezone": "UTC"
+}
+
+// Force interpretation as seconds
+{
+  "timestamp": 1742086200000,
+  "timezone": "UTC",
+  "force_seconds": true
+}
+```
+
+### Supported Timezones
+
+The datetime tools support common timezone names and IANA identifiers:
+
+- **Common Names**: `"Pacific Time"`, `"Eastern Time"`, `"Mountain Time"`, `"Central Time"`, `"UTC"`, `"GMT"`
+- **IANA Identifiers**: `"America/Los_Angeles"`, `"America/New_York"`, `"Europe/London"`, etc.
+
+### Best Practices
+
+1. **Always use milliseconds** for custom field datetime values
+2. **Use the new tools** (`datetime_to_timestamp` and `timestamp_to_datetime`) instead of the deprecated ones
+3. **Convert once, store in milliseconds** - don't convert repeatedly
+4. **Specify timezone** when displaying dates to users
+5. **Test your datetime conversions** before setting custom field values
+
+### Custom Field Workflow
+
+For datetime custom fields like `RECORDING_DATE`:
+
+1. **Input**: User provides human-readable datetime ("March 15, 2025 2:30 PM")
+2. **Convert**: Use `datetime_to_timestamp` to get milliseconds (`1742086200000`)
+3. **Store**: Set custom field value to the milliseconds
+4. **Display**: Use `timestamp_to_datetime` to convert back for user display
+
+This ensures compatibility with ClickUp's API requirements while maintaining user-friendly datetime handling.

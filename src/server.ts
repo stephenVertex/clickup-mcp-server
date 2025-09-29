@@ -105,6 +105,13 @@ import {
   resolveAssigneesTool, handleResolveAssignees
 } from "./tools/member.js";
 
+import {
+  datetimeToTimestampTool, handleDatetimeToTimestamp,
+  timestampToDatetimeTool, handleTimestampToDatetime,
+  datetimeToSecondsGmtTool, handleDatetimeToSecondsGmt,
+  secondsGmtToDatetimeTool, handleSecondsGmtToDatetime
+} from "./tools/datetime.js";
+
 import { Logger } from "./logger.js";
 import { clickUpServices } from "./services/shared.js";
 
@@ -225,6 +232,10 @@ export function configureServer() {
         addTaskDependencyTool,
         removeTaskDependencyTool,
         getTaskDependenciesTool,
+        datetimeToTimestampTool,
+        timestampToDatetimeTool,
+        datetimeToSecondsGmtTool,
+        secondsGmtToDatetimeTool,
         ...documentModule()
       ].filter(tool => isToolEnabled(tool.name))
     };
@@ -238,8 +249,8 @@ export function configureServer() {
 
   // Register CallTool handler with proper logging
   logger.info("Registering tool handlers", {
-    toolCount: 39,
-    categories: ["workspace", "task", "time-tracking", "list", "folder", "tag", "member", "document", "dependency"]
+    toolCount: 43,
+    categories: ["workspace", "task", "time-tracking", "list", "folder", "tag", "member", "document", "dependency", "datetime"]
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (req) => {
@@ -367,6 +378,14 @@ export function configureServer() {
           return handleRemoveTaskDependency(params);
         case "get_task_dependencies":
           return handleGetTaskDependencies(params);
+        case "datetime_to_timestamp":
+          return handleDatetimeToTimestamp(params);
+        case "timestamp_to_datetime":
+          return handleTimestampToDatetime(params);
+        case "datetime_to_seconds_gmt":
+          return handleDatetimeToSecondsGmt(params);
+        case "seconds_gmt_to_datetime":
+          return handleSecondsGmtToDatetime(params);
         default:
           logger.error(`Unknown tool requested: ${name}`);
           const error = new Error(`Unknown tool: ${name}`);

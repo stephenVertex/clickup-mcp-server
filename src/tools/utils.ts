@@ -11,11 +11,16 @@ import { Logger } from '../logger.js';
 import { clickUpServices } from '../services/shared.js';
 
 // Re-export date utilities
-export { 
+export {
   getRelativeTimestamp,
   parseDueDate,
   formatDueDate,
-  formatRelativeTime
+  formatRelativeTime,
+  datetimeToMillisecondsGmt,
+  timestampToDatetime,
+  // Backward compatibility
+  datetimeToSecondsGmt,
+  secondsGmtToDatetime
 } from '../utils/date-utils.js';
 
 // Re-export resolver utilities

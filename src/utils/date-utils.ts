@@ -612,27 +612,158 @@ export function formatDueDate(timestamp: number | null | undefined): string | un
  */
 export function formatRelativeTime(timestamp: string | number): string {
   if (!timestamp) return 'Unknown';
-  
+
   const timestampNum = typeof timestamp === 'string' ? parseInt(timestamp, 10) : timestamp;
   const now = Date.now();
   const diffMs = now - timestampNum;
-  
+
   // Convert to appropriate time unit
   const diffSec = Math.floor(diffMs / 1000);
   if (diffSec < 60) return `${diffSec} seconds ago`;
-  
+
   const diffMin = Math.floor(diffSec / 60);
   if (diffMin < 60) return `${diffMin} minutes ago`;
-  
+
   const diffHour = Math.floor(diffMin / 60);
   if (diffHour < 24) return `${diffHour} hours ago`;
-  
+
   const diffDays = Math.floor(diffHour / 24);
   if (diffDays < 30) return `${diffDays} days ago`;
-  
+
   const diffMonths = Math.floor(diffDays / 30);
   if (diffMonths < 12) return `${diffMonths} months ago`;
-  
+
   const diffYears = Math.floor(diffMonths / 12);
   return `${diffYears} years ago`;
+}
+
+/**
+ * Convert a datetime string or Date object to milliseconds since GMT epoch
+ *
+ * @param datetime Date string (ISO format, natural language, etc.) or Date object
+ * @param outputSeconds If true, returns seconds instead of milliseconds (for backward compatibility)
+ * @returns Milliseconds since GMT epoch (Unix timestamp), or seconds if outputSeconds is true
+ * @throws Error if the datetime cannot be parsed
+ */
+export function datetimeToMillisecondsGmt(datetime: string | Date, outputSeconds: boolean = false): number {
+  try {
+    let date: Date;
+
+    if (datetime instanceof Date) {
+      date = datetime;
+    } else if (typeof datetime === 'string') {
+      // Try to parse using our existing date parsing logic first
+      const parsed = parseDueDate(datetime);
+      if (parsed) {
+        date = new Date(parsed);
+      } else {
+        // Fallback to native Date constructor
+        date = new Date(datetime);
+      }
+    } else {
+      throw new Error('Invalid datetime type. Expected string or Date object.');
+    }
+
+    if (isNaN(date.getTime())) {
+      throw new Error(`Invalid datetime: ${datetime}`);
+    }
+
+    const milliseconds = date.getTime();
+    return outputSeconds ? Math.floor(milliseconds / 1000) : milliseconds;
+  } catch (error) {
+    logger.error(`Failed to convert datetime to milliseconds GMT: ${datetime}`, error);
+    throw new Error(`Invalid datetime format: ${datetime}`);
+  }
+}
+
+/**
+ * Convert a datetime string or Date object to seconds since GMT epoch
+ * @deprecated Use datetimeToMillisecondsGmt instead
+ */
+export function datetimeToSecondsGmt(datetime: string | Date): number {
+  return datetimeToMillisecondsGmt(datetime, true);
+}
+
+/**
+ * Convert timestamp to a formatted datetime string in specified timezone with autodetection
+ *
+ * @param timestamp Unix timestamp (autodetects milliseconds vs seconds)
+ * @param timezone Timezone string (e.g., "Pacific Time", "America/Los_Angeles", "UTC")
+ * @param forceSeconds If true, treats timestamp as seconds regardless of autodetection
+ * @returns Formatted datetime string in the specified timezone
+ * @throws Error if the timestamp or timezone is invalid
+ */
+export function timestampToDatetime(timestamp: number, timezone: string = 'Pacific Time', forceSeconds: boolean = false): string {
+  try {
+    if (typeof timestamp !== 'number' || isNaN(timestamp) || timestamp < 0) {
+      throw new Error('Invalid timestamp. Expected positive number.');
+    }
+
+    let milliseconds: number;
+
+    if (forceSeconds) {
+      // Force interpretation as seconds
+      milliseconds = timestamp * 1000;
+    } else {
+      // Autodetect based on timestamp magnitude
+      // Timestamps before year 2050 (1577836800000 ms / 1577836800 s)
+      // If timestamp < 2000000000, treat as seconds
+      // This handles dates from 1970 to ~2033 as seconds, and beyond that as milliseconds
+      const cutoffSeconds = 2000000000; // May 18, 2033
+
+      if (timestamp < cutoffSeconds) {
+        // Treat as seconds
+        milliseconds = timestamp * 1000;
+      } else {
+        // Treat as milliseconds
+        milliseconds = timestamp;
+      }
+    }
+
+    const date = new Date(milliseconds);
+
+    if (isNaN(date.getTime())) {
+      throw new Error(`Invalid timestamp: ${timestamp}`);
+    }
+
+    // Map common timezone names to IANA timezone identifiers
+    const timezoneMap: { [key: string]: string } = {
+      'pacific time': 'America/Los_Angeles',
+      'mountain time': 'America/Denver',
+      'central time': 'America/Chicago',
+      'eastern time': 'America/New_York',
+      'utc': 'UTC',
+      'gmt': 'UTC'
+    };
+
+    // Normalize timezone input
+    const normalizedTimezone = timezone.toLowerCase();
+    const timezoneId = timezoneMap[normalizedTimezone] || timezone;
+
+    // Format the date in the specified timezone
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezoneId,
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+      timeZoneName: 'short'
+    });
+
+    return formatter.format(date);
+  } catch (error) {
+    logger.error(`Failed to convert timestamp to datetime: ${timestamp} (timezone: ${timezone})`, error);
+    throw new Error(`Invalid timestamp or timezone: ${timestamp}, ${timezone}`);
+  }
+}
+
+/**
+ * Convert seconds since GMT epoch to a formatted datetime string in specified timezone
+ * @deprecated Use timestampToDatetime instead
+ */
+export function secondsGmtToDatetime(seconds: number, timezone: string = 'Pacific Time'): string {
+  return timestampToDatetime(seconds, timezone, true);
 } 
