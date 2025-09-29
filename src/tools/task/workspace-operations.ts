@@ -146,6 +146,10 @@ Notes:
       custom_fields: {
         type: 'object',
         description: 'Filter by custom field values. Provide as key-value pairs where keys are custom field IDs.'
+      },
+      low_token_mode: {
+        type: 'boolean',
+        description: 'Return tasks in low-token YAML-like format with only essential fields (name, id, status, priority, due_date, description, custom_fields, assignees, subtasks). Useful for reducing response size when dealing with many tasks.'
       }
     }
   },
@@ -255,6 +259,10 @@ Notes:
       custom_fields: {
         type: 'object',
         description: 'Filter by custom field values. Provide as key-value pairs where keys are custom field IDs.'
+      },
+      low_token_mode: {
+        type: 'boolean',
+        description: 'Return tasks in low-token YAML-like format with only essential fields (name, id, status, priority, due_date, description, custom_fields, assignees, subtasks). Useful for reducing response size when dealing with many tasks.'
       }
     }
   }

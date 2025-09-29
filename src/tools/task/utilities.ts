@@ -76,6 +76,63 @@ export function formatTaskData(task: ClickUpTask, additional: any = {}) {
   };
 }
 
+/**
+ * Formats task data for low-token mode response
+ * Returns a compact YAML-like structure as specified in docs/low_token_mode.md
+ */
+export function formatTaskDataLowToken(task: ClickUpTask) {
+  const result: any = {
+    name: task.name,
+    id: task.id,
+    status: task.status?.status || "Unknown",
+  };
+
+  // Add priority if it exists
+  if (task.priority?.priority) {
+    result.priority = task.priority.priority;
+  }
+
+  // Add due date if it exists
+  if (task.due_date) {
+    result.due_date = formatDueDate(Number(task.due_date));
+  }
+
+  // Add description if it exists (limit to reasonable length for low-token mode)
+  if (task.description) {
+    const description = task.description.trim();
+    result.description = description.length > 200
+      ? description.substring(0, 200) + "..."
+      : description;
+  }
+
+  // Add custom fields if they exist
+  if (task.custom_fields && task.custom_fields.length > 0) {
+    result.custom_fields = task.custom_fields.map(field => ({
+      name: field.name,
+      value: field.value
+    }));
+  }
+
+  // Add assignees if they exist
+  if (task.assignees && task.assignees.length > 0) {
+    result.assignees = task.assignees.map(assignee => ({
+      name: assignee.username || assignee.email,
+      id: assignee.id
+    }));
+  }
+
+  // Add subtasks if they exist
+  if (task.subtasks && task.subtasks.length > 0) {
+    result.subtasks = task.subtasks.map(subtask => ({
+      name: subtask.name,
+      id: subtask.id,
+      status: subtask.status?.status || "Unknown"
+    }));
+  }
+
+  return result;
+}
+
 //=============================================================================
 // TASK ID DETECTION UTILITIES
 //=============================================================================

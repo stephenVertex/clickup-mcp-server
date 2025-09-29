@@ -20,7 +20,8 @@ import {
   validateBulkTasks,
   parseBulkOptions,
   resolveListIdWithValidation,
-  formatTaskData
+  formatTaskData,
+  formatTaskDataLowToken
 } from './utilities.js';
 import { TaskService } from '../../services/clickup/task/task-service.js';
 import { ExtendedTaskFilters } from '../../services/clickup/types.js';
@@ -974,6 +975,21 @@ export async function getWorkspaceTasksHandler(
         });
       }
 
+      // Check for low-token mode first
+      if (params.low_token_mode) {
+        logger.info('Using low-token format for Views API response', {
+          totalTasks: allTasks.length
+        });
+
+        return {
+          tasks: allTasks.map(task => formatTaskDataLowToken(task)),
+          total_count: allTasks.length,
+          has_more: false,
+          next_page: 0,
+          format: 'low_token'
+        };
+      }
+
       // Check token limit and format response
       const shouldUseSummary = params.detail_level === 'summary' || wouldExceedTokenLimit({ tasks: allTasks });
 
@@ -1044,6 +1060,26 @@ export async function getWorkspaceTasksHandler(
       include_compact_time_entries: params.include_compact_time_entries,
       custom_fields: params.custom_fields
     };
+
+    // Check for low-token mode first
+    if (params.low_token_mode) {
+      logger.info('Using low-token format for standard workspace task retrieval');
+
+      // Force detailed mode to get full task data for formatting
+      const detailedFilters: ExtendedTaskFilters = { ...filters, detail_level: 'detailed' };
+      const response = await taskService.getWorkspaceTasks(detailedFilters) as any;
+
+      // Handle both DetailedTaskResponse and WorkspaceTasksResponse
+      const tasks = response.tasks || (response.summaries ? response.summaries : []);
+
+      return {
+        tasks: tasks.map((task: ClickUpTask) => formatTaskDataLowToken(task)),
+        total_count: response.total_count,
+        has_more: response.has_more,
+        next_page: response.next_page,
+        format: 'low_token'
+      };
+    }
 
     // Get tasks with adaptive response format support
     const response = await taskService.getWorkspaceTasks(filters);
